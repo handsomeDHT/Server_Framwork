@@ -1,0 +1,3 @@
+/home/Server_Framwork/cmake-build-debug/CMakeFiles/Server_Framwork.dir
+/home/Server_Framwork/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/Server_Framwork/cmake-build-debug/CMakeFiles/rebuild_cache.dir
