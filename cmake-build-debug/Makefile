@@ -31,6 +31,9 @@ default_target: all
 
 .SUFFIXES: .hpux_make_needs_suffix_list
 
+# Produce verbose output by default.
+VERBOSE = 1
+
 # Command-line flag to silence nested $(MAKE).
 $(VERBOSE)MAKESILENT = -s
 
@@ -117,65 +120,105 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named Server_Framwork
+# Target rules for targets named src
 
 # Build rule for target.
-Server_Framwork: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 Server_Framwork
-.PHONY : Server_Framwork
+src: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src
+.PHONY : src
 
 # fast build rule for target.
-Server_Framwork/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Server_Framwork.dir/build.make CMakeFiles/Server_Framwork.dir/build
-.PHONY : Server_Framwork/fast
+src/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/src.dir/build.make CMakeFiles/src.dir/build
+.PHONY : src/fast
 
-main.o: main.cpp.o
-.PHONY : main.o
+#=============================================================================
+# Target rules for targets named test
 
-# target to build an object file
-main.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Server_Framwork.dir/build.make CMakeFiles/Server_Framwork.dir/main.cpp.o
-.PHONY : main.cpp.o
+# Build rule for target.
+test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test
+.PHONY : test
 
-main.i: main.cpp.i
-.PHONY : main.i
+# fast build rule for target.
+test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/build
+.PHONY : test/fast
 
-# target to preprocess a source file
-main.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Server_Framwork.dir/build.make CMakeFiles/Server_Framwork.dir/main.cpp.i
-.PHONY : main.cpp.i
-
-main.s: main.cpp.s
-.PHONY : main.s
-
-# target to generate assembly for a file
-main.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Server_Framwork.dir/build.make CMakeFiles/Server_Framwork.dir/main.cpp.s
-.PHONY : main.cpp.s
-
-sylar/log.o: sylar/log.cc.o
-.PHONY : sylar/log.o
+src/log.o: src/log.cc.o
+.PHONY : src/log.o
 
 # target to build an object file
-sylar/log.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Server_Framwork.dir/build.make CMakeFiles/Server_Framwork.dir/sylar/log.cc.o
-.PHONY : sylar/log.cc.o
+src/log.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/src.dir/build.make CMakeFiles/src.dir/src/log.cc.o
+.PHONY : src/log.cc.o
 
-sylar/log.i: sylar/log.cc.i
-.PHONY : sylar/log.i
+src/log.i: src/log.cc.i
+.PHONY : src/log.i
 
 # target to preprocess a source file
-sylar/log.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Server_Framwork.dir/build.make CMakeFiles/Server_Framwork.dir/sylar/log.cc.i
-.PHONY : sylar/log.cc.i
+src/log.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/src.dir/build.make CMakeFiles/src.dir/src/log.cc.i
+.PHONY : src/log.cc.i
 
-sylar/log.s: sylar/log.cc.s
-.PHONY : sylar/log.s
+src/log.s: src/log.cc.s
+.PHONY : src/log.s
 
 # target to generate assembly for a file
-sylar/log.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Server_Framwork.dir/build.make CMakeFiles/Server_Framwork.dir/sylar/log.cc.s
-.PHONY : sylar/log.cc.s
+src/log.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/src.dir/build.make CMakeFiles/src.dir/src/log.cc.s
+.PHONY : src/log.cc.s
+
+src/util.o: src/util.cc.o
+.PHONY : src/util.o
+
+# target to build an object file
+src/util.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/src.dir/build.make CMakeFiles/src.dir/src/util.cc.o
+.PHONY : src/util.cc.o
+
+src/util.i: src/util.cc.i
+.PHONY : src/util.i
+
+# target to preprocess a source file
+src/util.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/src.dir/build.make CMakeFiles/src.dir/src/util.cc.i
+.PHONY : src/util.cc.i
+
+src/util.s: src/util.cc.s
+.PHONY : src/util.s
+
+# target to generate assembly for a file
+src/util.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/src.dir/build.make CMakeFiles/src.dir/src/util.cc.s
+.PHONY : src/util.cc.s
+
+tests/test.o: tests/test.cc.o
+.PHONY : tests/test.o
+
+# target to build an object file
+tests/test.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/src.dir/build.make CMakeFiles/src.dir/tests/test.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/tests/test.cc.o
+.PHONY : tests/test.cc.o
+
+tests/test.i: tests/test.cc.i
+.PHONY : tests/test.i
+
+# target to preprocess a source file
+tests/test.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/src.dir/build.make CMakeFiles/src.dir/tests/test.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/tests/test.cc.i
+.PHONY : tests/test.cc.i
+
+tests/test.s: tests/test.cc.s
+.PHONY : tests/test.s
+
+# target to generate assembly for a file
+tests/test.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/src.dir/build.make CMakeFiles/src.dir/tests/test.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/tests/test.cc.s
+.PHONY : tests/test.cc.s
 
 # Help Target
 help:
@@ -185,13 +228,17 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
-	@echo "... Server_Framwork"
-	@echo "... main.o"
-	@echo "... main.i"
-	@echo "... main.s"
-	@echo "... sylar/log.o"
-	@echo "... sylar/log.i"
-	@echo "... sylar/log.s"
+	@echo "... src"
+	@echo "... test"
+	@echo "... src/log.o"
+	@echo "... src/log.i"
+	@echo "... src/log.s"
+	@echo "... src/util.o"
+	@echo "... src/util.i"
+	@echo "... src/util.s"
+	@echo "... tests/test.o"
+	@echo "... tests/test.i"
+	@echo "... tests/test.s"
 .PHONY : help
 
 

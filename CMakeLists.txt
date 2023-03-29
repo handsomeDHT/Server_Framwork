@@ -3,4 +3,21 @@ project(Server_Framwork)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(Server_Framwork main.cpp src/log.cc)
+set(CMAKE_VERBOSE_MAKEFILE ON)
+set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic -O3 -fPIC -ggdb -std=c++11 -Wall -Wno-deprecated -Werror -Wno-unused-function -Wno-builtin-macro-redefined -Wno-deprecated-declarations")
+
+set(LIB_SRC
+    src/log.cc
+    tests/test.cc
+    src/util.h
+    src/util.cc)
+
+add_library(src SHARED ${LIB_SRC})
+add_executable(test tests/test.cc)
+add_dependencies(test src)
+target_link_libraries(test src)
+
+SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
+SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
+
+#add_executable(Server_Framwork main.cpp src/log.h src/log.cc)

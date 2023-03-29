@@ -1,41 +1,99 @@
-#ifndef __SRC_LOG_H__
-#define __SRC_LOG_H__
+#ifndef SERVER_FRAMWORK_LOG_H
+#define SERVER_FRAMWORK_LOG_H
 
 #include <string>
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 #include <list>
 #include <sstream>
 #include <fstream>
 #include <vector>
+#include <iostream>
+#include <map>
+#include <functional>
 
-namespace sylar {
+/**
+ * @brief 使用流式方式将日志级别level的日志写入到logger
+ */
+#define DHT_LOG_LEVEL(logger, level) \
+    if(logger->getLevel() <= level) \
+        dht::LogEventWrap(dht::LogEvent::ptr(new dht::LogEvent(logger, level, \
+                        __FILE__, __LINE__, 0, dht::GetThreadId(),\
+                dht::GetFiberId(), time(0)/*, dht::Thread::GetName()*/))).getSS()
+
+
+/**
+ * @brief 使用流式方式将日志级别debug的日志写入到logger
+ */
+#define DHT_LOG_DEBUG(logger) DHT_LOG_LEVEL(logger, dht::LogLevel::DEBUG)
+
+/**
+ * @brief 使用流式方式将日志级别info的日志写入到logger
+ */
+#define DHT_LOG_INFO(logger) DHT_LOG_LEVEL(logger, dht::LogLevel::INFO)
+
+/**
+ * @brief 使用流式方式将日志级别warn的日志写入到logger
+ */
+#define DHT_LOG_WARN(logger) DHT_LOG_LEVEL(logger, dht::LogLevel::WARN)
+
+/**
+ * @brief 使用流式方式将日志级别error的日志写入到logger
+ */
+#define DHT_LOG_ERROR(logger) DHT_LOG_LEVEL(logger, dht::LogLevel::ERROR)
+
+/**
+ * @brief 使用流式方式将日志级别fatal的日志写入到logger
+ */
+#define DHT_LOG_FATAL(logger) DHT_LOG_LEVEL(logger, dht::LogLevel::FATAL)
+
+/**
+ * @brief 使用格式化方式将日志级别level的日志写入到logger
+ */
+#define DHT_LOG_FMT_LEVEL(logger, level, fmt, ...) \
+    if(logger->getLevel() <= level)                \
+        dht::LogEventWrap(dht::LogEvent::ptr(new dht::LogEvent(logger, level, \
+                        __FILE__, __LINE__, 0, dht::GetThreadId(),\
+                dht::GetFiberId(), time(0), dht::Thread::GetName()))).getEvent()->format(fmt, __VA_ARGS__)
+
+/**
+ * @brief 使用格式化方式将日志级别debug的日志写入到logger
+ */
+#define DHT_LOG_FMT_DEBUG(logger, fmt, ...) DHT_LOG_FMT_LEVEL(logger, dht::LogLevel::DEBUG, fmt, __VA_ARGS__)
+
+/**
+ * @brief 使用格式化方式将日志级别info的日志写入到logger
+ */
+#define DHT_LOG_FMT_INFO(logger, fmt, ...)  DHT_LOG_FMT_LEVEL(logger, dht::LogLevel::INFO, fmt, __VA_ARGS__)
+
+/**
+ * @brief 使用格式化方式将日志级别warn的日志写入到logger
+ */
+#define DHT_LOG_FMT_WARN(logger, fmt, ...)  DHT_LOG_FMT_LEVEL(logger, dht::LogLevel::WARN, fmt, __VA_ARGS__)
+
+/**
+ * @brief 使用格式化方式将日志级别error的日志写入到logger
+ */
+#define DHT_LOG_FMT_ERROR(logger, fmt, ...) DHT_LOG_FMT_LEVEL(logger, dht::LogLevel::ERROR, fmt, __VA_ARGS__)
+
+/**
+ * @brief 使用格式化方式将日志级别fatal的日志写入到logger
+ */
+#define DHT_LOG_FMT_FATAL(logger, fmt, ...) DHT_LOG_FMT_LEVEL(logger, dht::LogLevel::FATAL, fmt, __VA_ARGS__)
+
+/**
+ * @brief 获取主日志器
+ */
+#define DHT_LOG_ROOT() dht::LoggerMgr::GetInstance()->getRoot()
+
+/**
+ * @brief 获取name的日志器
+ */
+#define DHT_LOG_NAME(name) dht::LoggerMgr::GetInstance()->getLogger(name)
+
+
+namespace dht {
 class Logger;
-
-//日志事件
-class LogEvent {
-public:
-    typedef std::shared_ptr<LogEvent> ptr;
-    LogEvent();
-    const char* getFile() const { return m_file; }
-    int32_t getLine() const { return m_line;}
-    uint32_t getElapse() const {return m_elapse;}
-    uint32_t getThreadId() const {return m_threadId;}
-    uint32_t getFiberID() const {return m_fiberId;}
-    uint64_t getTime() const {return m_time;}
-    const std::string& getContent() const {return m_content;};
-    const std::string& getThreadName() const { return m_threadName;}
-
-private:
-    const char *m_file = nullptr;  //文件地址
-    int32_t m_line = 0;              //行号
-    uint32_t m_elapse = 0;           //程序启动到现在的毫秒数
-    uint32_t m_threadId = 0;       //线程ID
-    uint32_t m_fiberId = 0;        //协程ID
-    uint64_t m_time = 0;           //时间戳
-    std::string m_content;         //消息
-    std::string m_threadName;      //线程名称
-};
 
 //日志级别
 class LogLevel {
@@ -50,6 +108,56 @@ public:
     };
     static const char* ToString(LogLevel::Level level);
 };
+
+//日志事件
+class LogEvent {
+public:
+    typedef std::shared_ptr<LogEvent> ptr;
+    LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level, const char* file, int32_t m_line, uint32_t elapse
+             , uint32_t thread_id, uint32_t fiber_id, uint64_t time);
+
+
+    const char* getFile() const { return m_file; }
+    int32_t getLine() const { return m_line;}
+    uint32_t getElapse() const {return m_elapse;}
+    uint32_t getThreadId() const {return m_threadId;}
+    uint32_t getFiberID() const {return m_fiberId;}
+    uint64_t getTime() const {return m_time;}
+
+
+    std::stringstream& getSS() {return m_ss;}
+    std::string getContent() const { return m_ss.str();}
+    const std::string& getThreadName() const { return m_threadName;}
+
+    std::shared_ptr<Logger> getLogger() const {return m_logger; }
+    LogLevel::Level getLevel() const { return m_level;}
+    //void format(const char* fmt, ....);
+
+private:
+    const char *m_file = nullptr;  //文件地址
+    int32_t m_line = 0;              //行号
+    uint32_t m_elapse = 0;           //程序启动到现在的毫秒数
+    uint32_t m_threadId = 0;       //线程ID
+    uint32_t m_fiberId = 0;        //协程ID
+    uint64_t m_time = 0;           //时间戳
+    std::stringstream m_ss;
+    std::string m_content;         //消息
+    std::string m_threadName;      //线程名称
+
+    std::shared_ptr<Logger> m_logger;
+    LogLevel::Level m_level;
+};
+
+class LogEventWrap{
+public:
+    LogEventWrap(LogEvent::ptr e);
+    ~LogEventWrap();
+
+    std::stringstream& getSS();
+private:
+    LogEvent::ptr m_event;
+};
+
 
 //日志格式器
 class LogFormatter {
@@ -98,12 +206,12 @@ public:
     LogFormatter::ptr getFormatter() const { return m_formatter; }
 
 protected:
-    LogLevel::Level m_level;
+    LogLevel::Level m_level = LogLevel::DEBUG;
     LogFormatter::ptr m_formatter;
 };
 
 //日志器
-class Logger {
+class Logger : public std::enable_shared_from_this<Logger> {
 public:
     typedef std::shared_ptr<Logger> ptr;
 
@@ -123,6 +231,7 @@ private:
     std::string m_name;                                //日志名称
     LogLevel::Level m_level;                           //日志级别
     std::list<LogAppender::ptr> m_appenders;           //Appender集合
+    LogFormatter::ptr m_formatter;                     //
 };
 
 //输出到控制台的Appender
@@ -130,7 +239,7 @@ class StdoutLogAppender : public LogAppender {
 public:
     typedef std::shared_ptr<StdoutLogAppender> ptr;
 
-    virtual void log(std::shared_ptr<Logger> logger ,LogLevel::Level level, LogEvent::ptr event) override;
+    virtual void log(Logger::ptr logger,LogLevel::Level level, LogEvent::ptr event) override;
 
 private:
 };
@@ -142,7 +251,7 @@ public:
 
     FileLogAppender(const std::string &filename);
 
-    void log(std::shared_ptr<Logger> logger , LogLevel::Level level, LogEvent::ptr event) override;
+    void log(Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) override;
 
 //重新打开文件，文件打开成功返回true
     bool reopen();
@@ -154,4 +263,4 @@ private:
 
 }
 
-#endif __SRC_LOG_H__
+#endif //SERVER_FRAMWORK_LOG_H
