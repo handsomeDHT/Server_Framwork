@@ -10,7 +10,7 @@ set(LIB_SRC
     src/log.cc
     tests/test.cc
     src/util.h
-    src/util.cc)
+    src/util.cc src/singleton.h)
 
 add_library(src SHARED ${LIB_SRC})
 add_executable(test tests/test.cc)

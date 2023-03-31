@@ -128,6 +128,9 @@
 		<Unit filename="/home/Server_Framwork/src/log.h">
 			<Option target="src"/>
 		</Unit>
+		<Unit filename="/home/Server_Framwork/src/singleton.h">
+			<Option target="src"/>
+		</Unit>
 		<Unit filename="/home/Server_Framwork/src/util.cc">
 			<Option target="src"/>
 		</Unit>

@@ -11,6 +11,11 @@
 #include <iostream>
 #include <map>
 #include <functional>
+#include <cstdarg>
+#include <stdarg.h>
+#include <map>
+#include "singleton.h"
+
 
 /**
  * @brief 使用流式方式将日志级别level的日志写入到logger
@@ -54,7 +59,7 @@
     if(logger->getLevel() <= level)                \
         dht::LogEventWrap(dht::LogEvent::ptr(new dht::LogEvent(logger, level, \
                         __FILE__, __LINE__, 0, dht::GetThreadId(),\
-                dht::GetFiberId(), time(0), dht::Thread::GetName()))).getEvent()->format(fmt, __VA_ARGS__)
+                dht::GetFiberId(), time(0)/*, dht::Thread::GetName()*/))).getEvent()->format(fmt, __VA_ARGS__)
 
 /**
  * @brief 使用格式化方式将日志级别debug的日志写入到logger
@@ -92,10 +97,12 @@
 #define DHT_LOG_NAME(name) dht::LoggerMgr::GetInstance()->getLogger(name)
 
 
-namespace dht {
+namespace dht{
 class Logger;
 
-//日志级别
+/**
+ * @brief 日志级别
+ */
 class LogLevel {
 public:
     enum Level {
@@ -109,7 +116,9 @@ public:
     static const char* ToString(LogLevel::Level level);
 };
 
-//日志事件
+/**
+ * @brief 日志事件
+ */
 class LogEvent {
 public:
     typedef std::shared_ptr<LogEvent> ptr;
@@ -131,7 +140,9 @@ public:
 
     std::shared_ptr<Logger> getLogger() const {return m_logger; }
     LogLevel::Level getLevel() const { return m_level;}
-    //void format(const char* fmt, ....);
+
+    void format(const char* fmt, ...);
+    void format(const char* fmt, va_list al);
 
 private:
     const char *m_file = nullptr;  //文件地址
@@ -143,23 +154,29 @@ private:
     std::stringstream m_ss;
     std::string m_content;         //消息
     std::string m_threadName;      //线程名称
-
     std::shared_ptr<Logger> m_logger;
     LogLevel::Level m_level;
+
 };
 
+/**
+ * @brief 日志事件包装器
+ */
 class LogEventWrap{
 public:
     LogEventWrap(LogEvent::ptr e);
     ~LogEventWrap();
+
+    LogEvent::ptr getEvent() const {return m_event; }
 
     std::stringstream& getSS();
 private:
     LogEvent::ptr m_event;
 };
 
-
-//日志格式器
+/**
+ * @brief 日志格式器
+ */
 class LogFormatter {
 public:
     typedef std::shared_ptr<LogFormatter> ptr;
@@ -173,18 +190,22 @@ public:
     class FormatItem {
     public:
         typedef std::shared_ptr<FormatItem> ptr;
-        //FormatItem(const std::string& fmt = "");
         virtual ~FormatItem() {}
         virtual void format(std::ostream &os, std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event) = 0;
     };
     void init();
 
+    bool isError() const { return m_error;}
+
 private:
     std::string m_pattern;
     std::vector<FormatItem::ptr> m_items;
+    bool m_error = false;
 };
 
-//日志输出地
+/**
+ * @brief 日志输出地
+ */
 class LogAppender {
 public:
     typedef std::shared_ptr<LogAppender> ptr;
@@ -205,12 +226,17 @@ public:
     */
     LogFormatter::ptr getFormatter() const { return m_formatter; }
 
+    LogLevel::Level getLevel() const { return m_level; }
+    void setLevel(LogLevel::Level val) {m_level = val; }
+
 protected:
     LogLevel::Level m_level = LogLevel::DEBUG;
     LogFormatter::ptr m_formatter;
 };
 
-//日志器
+/**
+ * @brief 日志器
+ */
 class Logger : public std::enable_shared_from_this<Logger> {
 public:
     typedef std::shared_ptr<Logger> ptr;
@@ -247,7 +273,7 @@ private:
 //输出到文件的Appender
 class FileLogAppender : public LogAppender {
 public:
-    typedef std::shared_ptr<StdoutLogAppender> ptr;
+    typedef std::shared_ptr<FileLogAppender> ptr;
 
     FileLogAppender(const std::string &filename);
 
@@ -260,6 +286,20 @@ private:
     std::string m_filename;
     std::ofstream m_filestream;
 };
+
+//日志管理器
+class LoggerManager{
+public:
+    LoggerManager();
+    Logger::ptr getLogger(const std::string& name);
+
+    void init();
+private:
+    std::map<std::string, Logger::ptr> m_loggers;
+    Logger::ptr m_root;
+};
+
+typedef dht::Singleton<LoggerManager> LoggerMgr;
 
 }
 
