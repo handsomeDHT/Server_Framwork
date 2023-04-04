@@ -99,7 +99,6 @@
 
 namespace dht{
 class Logger;
-
 /**
  * @brief 日志级别
  */
@@ -125,19 +124,15 @@ public:
     LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level, const char* file, int32_t m_line, uint32_t elapse
              , uint32_t thread_id, uint32_t fiber_id, uint64_t time);
 
-
     const char* getFile() const { return m_file; }
     int32_t getLine() const { return m_line;}
     uint32_t getElapse() const {return m_elapse;}
     uint32_t getThreadId() const {return m_threadId;}
     uint32_t getFiberID() const {return m_fiberId;}
     uint64_t getTime() const {return m_time;}
-
-
     std::stringstream& getSS() {return m_ss;}
     std::string getContent() const { return m_ss.str();}
     const std::string& getThreadName() const { return m_threadName;}
-
     std::shared_ptr<Logger> getLogger() const {return m_logger; }
     LogLevel::Level getLevel() const { return m_level;}
 
@@ -176,6 +171,23 @@ private:
 
 /**
  * @brief 日志格式器
+     * @brief 构造函数
+     * @param[in] pattern 格式模板
+     * @details
+     *  %m 消息
+     *  %p 日志级别
+     *  %r 累计毫秒数
+     *  %c 日志名称
+     *  %t 线程id
+     *  %n 换行
+     *  %d 时间
+     *  %f 文件名
+     *  %l 行号
+     *  %T 制表符
+     *  %F 协程id
+     *  %N 线程名称
+     *
+     *  默认格式 "%d{%Y-%m-%d %H:%M:%S}%T%t%T%N%T%F%T[%p]%T[%c]%T%f:%l%T%m%n"
  */
 class LogFormatter {
 public:
@@ -217,17 +229,12 @@ public:
     * @param[in] event 日志事件
     */
     virtual void log(std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event) = 0;
-    /**
-    * @brief 更改日志格式器
-    */
+
     void setFormatter(LogFormatter::ptr val) { m_formatter = val; }
-    /**
-    * @brief 获取日志格式器
-    */
     LogFormatter::ptr getFormatter() const { return m_formatter; }
 
-    LogLevel::Level getLevel() const { return m_level; }
     void setLevel(LogLevel::Level val) {m_level = val; }
+    LogLevel::Level getLevel() const { return m_level; }
 
 protected:
     LogLevel::Level m_level = LogLevel::DEBUG;
@@ -243,6 +250,7 @@ public:
 
     explicit Logger(const std::string& name = "root");
     void log(LogLevel::Level level, LogEvent::ptr event);
+
     void debug(LogEvent::ptr event);
     void info(LogEvent::ptr event);
     void warn(LogEvent::ptr event);
@@ -294,13 +302,13 @@ public:
     Logger::ptr getLogger(const std::string& name);
 
     void init();
+    Logger::ptr getRoot() const {return m_root;}
 private:
     std::map<std::string, Logger::ptr> m_loggers;
     Logger::ptr m_root;
 };
 
 typedef dht::Singleton<LoggerManager> LoggerMgr;
-
 }
 
 #endif //SERVER_FRAMWORK_LOG_H

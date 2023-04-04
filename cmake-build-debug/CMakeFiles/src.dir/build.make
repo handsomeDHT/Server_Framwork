@@ -86,24 +86,10 @@ CMakeFiles/src.dir/src/log.cc.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/src.dir/src/log.cc.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/Server_Framwork/src/log.cc -o CMakeFiles/src.dir/src/log.cc.s
 
-CMakeFiles/src.dir/tests/test.cc.o: CMakeFiles/src.dir/flags.make
-CMakeFiles/src.dir/tests/test.cc.o: /home/Server_Framwork/tests/test.cc
-CMakeFiles/src.dir/tests/test.cc.o: CMakeFiles/src.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/Server_Framwork/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/src.dir/tests/test.cc.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/src.dir/tests/test.cc.o -MF CMakeFiles/src.dir/tests/test.cc.o.d -o CMakeFiles/src.dir/tests/test.cc.o -c /home/Server_Framwork/tests/test.cc
-
-CMakeFiles/src.dir/tests/test.cc.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/src.dir/tests/test.cc.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/Server_Framwork/tests/test.cc > CMakeFiles/src.dir/tests/test.cc.i
-
-CMakeFiles/src.dir/tests/test.cc.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/src.dir/tests/test.cc.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/Server_Framwork/tests/test.cc -o CMakeFiles/src.dir/tests/test.cc.s
-
 CMakeFiles/src.dir/src/util.cc.o: CMakeFiles/src.dir/flags.make
 CMakeFiles/src.dir/src/util.cc.o: /home/Server_Framwork/src/util.cc
 CMakeFiles/src.dir/src/util.cc.o: CMakeFiles/src.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/Server_Framwork/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/src.dir/src/util.cc.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/Server_Framwork/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/src.dir/src/util.cc.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/src.dir/src/util.cc.o -MF CMakeFiles/src.dir/src/util.cc.o.d -o CMakeFiles/src.dir/src/util.cc.o -c /home/Server_Framwork/src/util.cc
 
 CMakeFiles/src.dir/src/util.cc.i: cmake_force
@@ -114,18 +100,32 @@ CMakeFiles/src.dir/src/util.cc.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/src.dir/src/util.cc.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/Server_Framwork/src/util.cc -o CMakeFiles/src.dir/src/util.cc.s
 
+CMakeFiles/src.dir/src/config.cc.o: CMakeFiles/src.dir/flags.make
+CMakeFiles/src.dir/src/config.cc.o: /home/Server_Framwork/src/config.cc
+CMakeFiles/src.dir/src/config.cc.o: CMakeFiles/src.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/Server_Framwork/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/src.dir/src/config.cc.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/src.dir/src/config.cc.o -MF CMakeFiles/src.dir/src/config.cc.o.d -o CMakeFiles/src.dir/src/config.cc.o -c /home/Server_Framwork/src/config.cc
+
+CMakeFiles/src.dir/src/config.cc.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/src.dir/src/config.cc.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/Server_Framwork/src/config.cc > CMakeFiles/src.dir/src/config.cc.i
+
+CMakeFiles/src.dir/src/config.cc.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/src.dir/src/config.cc.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/Server_Framwork/src/config.cc -o CMakeFiles/src.dir/src/config.cc.s
+
 # Object files for target src
 src_OBJECTS = \
 "CMakeFiles/src.dir/src/log.cc.o" \
-"CMakeFiles/src.dir/tests/test.cc.o" \
-"CMakeFiles/src.dir/src/util.cc.o"
+"CMakeFiles/src.dir/src/util.cc.o" \
+"CMakeFiles/src.dir/src/config.cc.o"
 
 # External object files for target src
 src_EXTERNAL_OBJECTS =
 
 lib/libsrc.so: CMakeFiles/src.dir/src/log.cc.o
-lib/libsrc.so: CMakeFiles/src.dir/tests/test.cc.o
 lib/libsrc.so: CMakeFiles/src.dir/src/util.cc.o
+lib/libsrc.so: CMakeFiles/src.dir/src/config.cc.o
 lib/libsrc.so: CMakeFiles/src.dir/build.make
 lib/libsrc.so: CMakeFiles/src.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/Server_Framwork/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Linking CXX shared library lib/libsrc.so"

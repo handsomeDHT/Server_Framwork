@@ -13,8 +13,8 @@ int main(int argc, char** argv){
 
     dht::LogFormatter::ptr fmt(new dht::LogFormatter("%d%T%p%T%m%n"));
     file_appender->setFormatter(fmt);
-
     file_appender->setLevel(dht::LogLevel::ERROR);
+
     logger->addAppender(file_appender);
 
     //dht::LogEvent::ptr event(new dht::LogEvent(__FILE__, __LINE__, 0, dht::GetThreadId(), dht::GetFiberId(), time(0)));

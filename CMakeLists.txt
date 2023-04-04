@@ -8,14 +8,20 @@ set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic -O3 -fPIC -ggdb -std=c++11 -Wall -
 
 set(LIB_SRC
     src/log.cc
-    tests/test.cc
     src/util.h
-    src/util.cc src/singleton.h)
+    src/util.cc
+    src/singleton.h
+    src/config.h
+    src/config.cc)
 
 add_library(src SHARED ${LIB_SRC})
 add_executable(test tests/test.cc)
 add_dependencies(test src)
 target_link_libraries(test src)
+
+add_executable(test_config tests/test_config.cc)
+add_dependencies(test_config src)
+target_link_libraries(test_config src)
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)

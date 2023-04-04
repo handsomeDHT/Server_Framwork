@@ -1,4 +1,5 @@
 /home/Server_Framwork/cmake-build-debug/CMakeFiles/src.dir
 /home/Server_Framwork/cmake-build-debug/CMakeFiles/test.dir
+/home/Server_Framwork/cmake-build-debug/CMakeFiles/test_config.dir
 /home/Server_Framwork/cmake-build-debug/CMakeFiles/edit_cache.dir
 /home/Server_Framwork/cmake-build-debug/CMakeFiles/rebuild_cache.dir
