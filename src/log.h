@@ -121,8 +121,13 @@ public:
 class LogEvent {
 public:
     typedef std::shared_ptr<LogEvent> ptr;
-    LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level, const char* file, int32_t m_line, uint32_t elapse
-             , uint32_t thread_id, uint32_t fiber_id, uint64_t time);
+    LogEvent(std::shared_ptr<Logger> logger
+             ,LogLevel::Level level
+             ,const char* file
+             ,int32_t m_line, uint32_t elapse
+             ,uint32_t thread_id
+             ,uint32_t fiber_id
+             ,uint64_t time);
 
     const char* getFile() const { return m_file; }
     int32_t getLine() const { return m_line;}
@@ -186,14 +191,16 @@ private:
      *  %T 制表符
      *  %F 协程id
      *  %N 线程名称
-     *
      *  默认格式 "%d{%Y-%m-%d %H:%M:%S}%T%t%T%N%T%F%T[%p]%T[%c]%T%f:%l%T%m%n"
  */
 class LogFormatter {
 public:
     typedef std::shared_ptr<LogFormatter> ptr;
     explicit LogFormatter(const std::string& pattern);
-    std::string format(std::shared_ptr<Logger> logger, LogLevel::Level level , LogEvent::ptr event);
+    //将LogEvent格式化成字符串
+    std::string format(std::shared_ptr<Logger> logger
+                       ,LogLevel::Level level
+                       ,LogEvent::ptr event);
 
 public:
     /**
@@ -203,14 +210,20 @@ public:
     public:
         typedef std::shared_ptr<FormatItem> ptr;
         virtual ~FormatItem() {}
-        virtual void format(std::ostream &os, std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event) = 0;
+        //将对应的日志格式内容写到os中
+        virtual void format(std::ostream &os
+                            , std::shared_ptr<Logger> logger
+                            , LogLevel::Level level
+                            , LogEvent::ptr event) = 0;
     };
     void init();
 
     bool isError() const { return m_error;}
 
 private:
+    //日志格式
     std::string m_pattern;
+    //通过日志格式解析出来的FormatItem
     std::vector<FormatItem::ptr> m_items;
     bool m_error = false;
 };
@@ -228,7 +241,9 @@ public:
     * @param[in] level 日志级别
     * @param[in] event 日志事件
     */
-    virtual void log(std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event) = 0;
+    virtual void log(std::shared_ptr<Logger> logger
+                     ,LogLevel::Level level
+                     ,LogEvent::ptr event) = 0;
 
     void setFormatter(LogFormatter::ptr val) { m_formatter = val; }
     LogFormatter::ptr getFormatter() const { return m_formatter; }
@@ -273,7 +288,9 @@ class StdoutLogAppender : public LogAppender {
 public:
     typedef std::shared_ptr<StdoutLogAppender> ptr;
 
-    virtual void log(Logger::ptr logger,LogLevel::Level level, LogEvent::ptr event) override;
+    virtual void log(Logger::ptr logger
+                     ,LogLevel::Level level
+                     ,LogEvent::ptr event) override;
 
 private:
 };
@@ -285,7 +302,9 @@ public:
 
     FileLogAppender(const std::string &filename);
 
-    void log(Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) override;
+    void log(Logger::ptr logger
+             ,LogLevel::Level level
+             ,LogEvent::ptr event) override;
 
 //重新打开文件，文件打开成功返回true
     bool reopen();

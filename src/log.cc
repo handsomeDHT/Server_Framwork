@@ -179,12 +179,11 @@ public:
     }
 };
 
-
 LogFormatter::LogFormatter(const std::string& pattern)
         : m_pattern(pattern) {
     init();
 }
-
+//一层一层分解获得信息
 std::string LogFormatter::format(std::shared_ptr<Logger> logger, LogLevel::Level level , LogEvent::ptr event) {
     std::stringstream ss;
     for (auto &i: m_items) {
@@ -198,6 +197,7 @@ void LogFormatter::init() {
     //str, format, type
     std::vector<std::tuple<std::string, std::string, int> > vec;
     std::string nstr;
+
     for(size_t i = 0; i < m_pattern.size(); ++i) {
         if(m_pattern[i] != '%') {
             nstr.append(1, m_pattern[i]);
@@ -325,6 +325,7 @@ void LogEvent::format(const char *fmt, ...) {
     format(fmt, al);
     va_end(al);
 }
+
 void LogEvent::format(const char *fmt, va_list al) {
     char* buf = nullptr;
     int len = vasprintf(&buf, fmt, al);
@@ -406,6 +407,7 @@ FileLogAppender::FileLogAppender(const std::string &filename) : m_filename(filen
     reopen();
 }
 
+//往文件中写
 void FileLogAppender::log(std::shared_ptr<Logger> logger , LogLevel::Level level, LogEvent::ptr event) {
     if (level >= m_level) {
         //m_filestream << m_formatter.format(event)原文写的是这样的
@@ -421,6 +423,7 @@ bool FileLogAppender::reopen() {
     return !!m_filestream;
 }
 
+//输出
 void StdoutLogAppender::log(std::shared_ptr<Logger> logger ,LogLevel::Level level, LogEvent::ptr event) {
     if (level >= m_level) {
         std::cout << m_formatter->format(logger, level ,event);
@@ -433,7 +436,6 @@ void StdoutLogAppender::log(std::shared_ptr<Logger> logger ,LogLevel::Level leve
 
 LoggerManager::LoggerManager() {
     m_root.reset(new Logger);
-
     m_root->addAppender(LogAppender::ptr (new StdoutLogAppender));
 }
 

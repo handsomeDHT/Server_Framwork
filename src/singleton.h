@@ -8,6 +8,7 @@
 #include <memory>
 
 namespace dht{
+
 template<class T, class X = void, int N = 0>
 class Singleton{
 public:

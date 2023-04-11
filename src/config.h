@@ -1,7 +1,6 @@
 //
 // Created by 帅帅的涛 on 2023/4/4.
 //
-
 #ifndef SERVER_FRAMWORK_CONFIG_H
 #define SERVER_FRAMWORK_CONFIG_H
 
@@ -19,7 +18,7 @@ namespace dht{
 class ConfigVarBase {
 public:
     typedef std::shared_ptr<ConfigVarBase> ptr;
-
+    // 解/析构函数
     ConfigVarBase(const std::string& name, const std::string& description = "")
         :m_name(name)
         ,m_description(description){
@@ -37,8 +36,8 @@ public:
 protected:
     std::string m_name;
     std::string m_description;
-
 };
+
 /**
  * @brief 配置参数模板子类,保存对应类型的参数值
  * @details T 参数的具体类型
@@ -77,6 +76,7 @@ public:
         }
         return false;
     }
+
     const T getValue() const {return m_val;}
     void setValue(const T& v) { m_val = v; }
 private:
@@ -91,22 +91,33 @@ class Config{
 public:
     typedef std::map<std::string, ConfigVarBase::ptr> ConfigVarMap;
 
+    /**
+     * @brief 获取/创建对应参数名的配置参数
+     * @param[in] name 配置参数名称
+     * @param[in] default_value 参数默认值
+     * @param[in] description 参数描述
+     * @details 获取参数名为name的配置参数,如果存在直接返回
+     *          如果不存在,创建参数配置并用default_value赋值
+     * @return 返回对应的配置参数,如果参数名存在但是类型不匹配则返回nullptr
+     * @exception 如果参数名包含非法字符[^0-9a-z_.] 抛出异常 std::invalid_argument
+     */
     template<class T>
     static typename ConfigVar<T>::ptr Lookup(const std::string& name,
                                              const T& default_value,
                                              const std::string& description = ""){
         auto tmp = Lookup<T>(name);
+        //如果存在相同name的配置参数，则返回对应name配置参数的指针信息
         if(tmp){
             DHT_LOG_INFO(DHT_LOG_ROOT()) << "Lookup name=" << name << " exists";
             return tmp;
         }
-
+        //判断寻找的name 是否符合命名规范
         if(name.find_first_not_of("abcdefjhijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ._012345678")
                 != std::string::npos){
             DHT_LOG_ERROR(DHT_LOG_ROOT()) << "Lookup name invalid" << name;
             throw std::invalid_argument(name);
         }
-
+        //如果不存在名为name的配置参数，则创建一个新的
         typename ConfigVar<T>::ptr v(new ConfigVar<T>(name, default_value, description));
         s_datas[name] = v;
         return v;
@@ -118,7 +129,7 @@ public:
      * @return 返回配置参数名为name的配置参数
      */
     template<class T>
-    static typename ConfigVar<T>:: ptr Lookup(const std::string& name){
+    static typename ConfigVar<T>::ptr Lookup(const std::string& name){
         auto it = s_datas.find(name);
         if(it == s_datas.end()){
             return nullptr;
@@ -127,7 +138,6 @@ public:
     }
 private:
     static ConfigVarMap s_datas;
-
 };
 
 }
