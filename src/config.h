@@ -10,6 +10,7 @@
 #include <boost/lexical_cast.hpp>
 #include "log.h"
 #include "util.h"
+#include "yaml-cpp/yaml.h"
 
 namespace dht{
 /**
@@ -19,9 +20,12 @@ class ConfigVarBase {
 public:
     typedef std::shared_ptr<ConfigVarBase> ptr;
     // 解/析构函数
-    ConfigVarBase(const std::string& name, const std::string& description = "")
+    ConfigVarBase(const std::string& name
+                  , const std::string& description = "")
         :m_name(name)
         ,m_description(description){
+
+        std::transform(m_name.begin(), m_name.end(), m_name.begin() ,::tolower);
     }
     virtual ~ConfigVarBase(){};
 
@@ -76,7 +80,6 @@ public:
         }
         return false;
     }
-
     const T getValue() const {return m_val;}
     void setValue(const T& v) { m_val = v; }
 private:
@@ -102,6 +105,7 @@ public:
      * @exception 如果参数名包含非法字符[^0-9a-z_.] 抛出异常 std::invalid_argument
      */
     template<class T>
+    //初始化，判断存在信息、命名规范、创建新对象
     static typename ConfigVar<T>::ptr Lookup(const std::string& name,
                                              const T& default_value,
                                              const std::string& description = ""){
@@ -112,7 +116,7 @@ public:
             return tmp;
         }
         //判断寻找的name 是否符合命名规范
-        if(name.find_first_not_of("abcdefjhijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ._012345678")
+        if(name.find_first_not_of("abcdefjhijklmnopqrstuvwxyz._012345678")
                 != std::string::npos){
             DHT_LOG_ERROR(DHT_LOG_ROOT()) << "Lookup name invalid" << name;
             throw std::invalid_argument(name);
@@ -136,6 +140,10 @@ public:
         }
         return std::dynamic_pointer_cast<ConfigVar<T>>(it -> second);
     }
+
+    static void LoadFromYaml(const YAML::Node& root);
+
+    static ConfigVarBase::ptr LookupBase(const std::string& name);
 private:
     static ConfigVarMap s_datas;
 };

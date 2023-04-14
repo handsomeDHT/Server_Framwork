@@ -19,6 +19,7 @@ dht::ConfigVar<float>::ptr g_float_value_config =
                 ,"system value");
 
 void print_yaml(const YAML::Node& node, int level) {
+    //根据不同的yaml类型进行解析
     if(node.IsScalar()) {
         DHT_LOG_INFO(DHT_LOG_ROOT()) << std::string(level * 4, ' ')
                                          << node.Scalar() << " - " << node.Type() << " - " << level;
@@ -41,6 +42,18 @@ void print_yaml(const YAML::Node& node, int level) {
     }
 }
 
+void test_config(){
+    DHT_LOG_INFO(DHT_LOG_ROOT()) << "before:" << g_int_value_config->getValue();
+    DHT_LOG_INFO(DHT_LOG_ROOT()) << "before:" << g_float_value_config->toString();
+
+    //加载配置项，改变日志信息。
+    YAML::Node root = YAML::LoadFile("/home/Server_Framwork/bin/conf/log.yml");
+    dht::Config::LoadFromYaml(root);
+
+    DHT_LOG_INFO(DHT_LOG_ROOT()) << "after:" << g_int_value_config->getValue();
+    DHT_LOG_INFO(DHT_LOG_ROOT()) << "after:" << g_float_value_config->toString();
+}
+
 void test_yaml(){
     YAML::Node root = YAML::LoadFile("/home/Server_Framwork/bin/conf/log.yml");
     //加载log.yml后，进行遍历解析
@@ -50,9 +63,7 @@ void test_yaml(){
 }
 
 int main(int argc, char** argv){
-    //dht::Logger::ptr logger;
-    DHT_LOG_INFO(DHT_LOG_ROOT()) << g_int_value_config->getValue();
-    DHT_LOG_INFO(DHT_LOG_ROOT()) << g_float_value_config->toString();
+    //test_config();
     test_yaml();
 
     return 0;

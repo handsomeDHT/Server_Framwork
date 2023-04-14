@@ -22,7 +22,7 @@ set(LIB_SRC
 add_library(src SHARED ${LIB_SRC})
 add_executable(test tests/test.cc)
 add_dependencies(test src)
-target_link_libraries(test src)
+target_link_libraries(test src yaml-cpp)
 
 add_executable(test_config tests/test_config.cc)
 add_dependencies(test_config src)
