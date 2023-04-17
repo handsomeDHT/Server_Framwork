@@ -25,7 +25,10 @@ public:
         :m_name(name)
         ,m_description(description){
 
-        std::transform(m_name.begin(), m_name.end(), m_name.begin() ,::tolower);
+        std::transform(m_name.begin()
+                       , m_name.end()
+                       , m_name.begin()
+                       ,::tolower);
     }
     virtual ~ConfigVarBase(){};
 
@@ -42,6 +45,47 @@ protected:
     std::string m_description;
 };
 
+//基础类型转换,From F type to T type
+template<class F, class T>
+class LexicalCast {
+public:
+    T operator() (const F& v){
+        return boost::lexical_cast<T>(v);
+    }
+};
+
+//YAML::String->std::vector<T>
+template<class T>
+class LexicalCast<std::string, std::vector<T> > {
+public:
+    std::vector<T> operator()(const std::string& v) {
+        YAML::Node node = YAML::Load(v);
+        typename std::vector<T> vec;
+        std::stringstream ss;
+        for(size_t i = 0; i < node.size(); ++i) {
+            ss.str("");
+            ss << node[i];
+            vec.push_back(LexicalCast<std::string, T>()(ss.str()));
+        }
+        return vec;
+    }
+};
+
+//vector<T>->YAML String
+template<class T>
+class LexicalCast<std::vector<T>, std::string> {
+public:
+    std::string operator()(const std::vector<T>& v) {
+        YAML::Node node(YAML::NodeType::Sequence);
+        for(auto& i : v) {
+            node.push_back(YAML::Load(LexicalCast<T, std::string>()(i)));
+        }
+        std::stringstream ss;
+        ss << node;
+        return ss.str();
+    }
+};
+
 /**
  * @brief 配置参数模板子类,保存对应类型的参数值
  * @details T 参数的具体类型
@@ -49,7 +93,9 @@ protected:
  *          ToStr 从T转换成std::string的仿函数
  *          std::string 为YAML格式的字符串
  */
-template<class T>
+template<class T
+        , class FromStr = LexicalCast<std::string, T>
+        , class ToStr = LexicalCast<T, std::string>>
 class ConfigVar : public ConfigVarBase{
 public:
     typedef std::shared_ptr<ConfigVar> ptr;
@@ -64,7 +110,8 @@ public:
     std::string toString() override{
         try {
             //boost::lexical_cast用于将字符串与整数/浮点数之间的字面转换
-            return boost::lexical_cast<std::string>(m_val);
+            //return boost::lexical_cast<std::string>(m_val);
+            return ToStr() (m_val);
         }catch (std::exception& e){
             DHT_LOG_ERROR(DHT_LOG_ROOT()) << "ConfigVar::toString exception"
                 << e.what() << " convert:" << typeid(m_val).name() << "to string";
@@ -73,7 +120,8 @@ public:
     }
     bool fromString(const std::string& val) override{
         try{
-            m_val = boost::lexical_cast<T>(val);
+            //m_val = boost::lexical_cast<T>(val);
+            setValue(FromStr() (val));
         }catch(std::exception& e){
             DHT_LOG_ERROR(DHT_LOG_ROOT()) << "ConfigVar::toString exception"
                 << e.what() << " convert: string to" << typeid(m_val).name();

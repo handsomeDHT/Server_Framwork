@@ -18,6 +18,12 @@ dht::ConfigVar<float>::ptr g_float_value_config =
                 ,(float)10.2f //m_val
                 ,"system value");
 
+dht::ConfigVar<std::vector<int>>::ptr g_int_vec_value_config =
+        dht::Config::Lookup(
+                "system.int_vec"
+                ,std::vector<int>{1,2} //m_val
+                ,"system int vec");
+
 void print_yaml(const YAML::Node& node, int level) {
     //根据不同的yaml类型进行解析
     if(node.IsScalar()) {
@@ -45,6 +51,10 @@ void print_yaml(const YAML::Node& node, int level) {
 void test_config(){
     DHT_LOG_INFO(DHT_LOG_ROOT()) << "before:" << g_int_value_config->getValue();
     DHT_LOG_INFO(DHT_LOG_ROOT()) << "before:" << g_float_value_config->toString();
+    auto& v = g_int_vec_value_config->getValue();
+    for(auto& i : v){
+        DHT_LOG_INFO(DHT_LOG_ROOT()) << "int_vec:" << i;
+    }
 
     //加载配置项，改变日志信息。
     YAML::Node root = YAML::LoadFile("/home/Server_Framwork/bin/conf/log.yml");
@@ -63,8 +73,8 @@ void test_yaml(){
 }
 
 int main(int argc, char** argv){
-    //test_config();
-    test_yaml();
+    test_config();
+    //test_yaml();
 
     return 0;
 }
