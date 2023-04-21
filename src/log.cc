@@ -297,7 +297,8 @@ void LogFormatter::init() {
             vec.push_back(std::make_tuple(str, fmt, 1));
             i = n - 1;
         } else if(fmt_status == 1) {
-            std::cout << "pattern parse error: " << m_pattern << " - " << m_pattern.substr(i) << std::endl;
+            std::cout << "pattern parse error: "
+                << m_pattern << " - " << m_pattern.substr(i) << std::endl;
             m_error = true;
             vec.push_back(std::make_tuple("<<pattern_error>>", fmt, 0));
         }
@@ -306,7 +307,8 @@ void LogFormatter::init() {
     if(!nstr.empty()) {
         vec.push_back(std::make_tuple(nstr, "", 0));
     }
-    static std::map<std::string, std::function<FormatItem::ptr(const std::string& str)> > s_format_items = {
+    static std::map<std::string
+        , std::function<FormatItem::ptr(const std::string& str)> > s_format_items = {
 #define XX(str, C) \
         {#str, [](const std::string& fmt) { return FormatItem::ptr(new C(fmt));}}
 
@@ -448,7 +450,8 @@ FileLogAppender::FileLogAppender(const std::string &filename) : m_filename(filen
 }
 
 //往文件中写
-void FileLogAppender::log(std::shared_ptr<Logger> logger , LogLevel::Level level, LogEvent::ptr event) {
+void FileLogAppender::log(std::shared_ptr<Logger> logger
+                          , LogLevel::Level level, LogEvent::ptr event) {
     if (level >= m_level) {
         //m_filestream << m_formatter.format(event)原文写的是这样的
         m_filestream << m_formatter->format(logger, level, event);
