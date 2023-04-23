@@ -204,6 +204,12 @@ dht::ConfigVar<std::map<std::string, std::vector<Person> > >::ptr g_person_vec_m
                 , "system person");
 
 void test_class() {
+
+    g_person->addListener(10, [](const Person& old_value, const Person& new_value){
+        DHT_LOG_INFO(DHT_LOG_ROOT()) << "old_value=" << old_value.toString()
+                                     << " new_value=" << new_value.toString();
+    });
+
     DHT_LOG_INFO(DHT_LOG_ROOT()) << "before: " << g_person->getValue().toString() << " - " << g_person->toString();
 
 #define XX_PM(g_var, prefix) \
@@ -214,6 +220,8 @@ void test_class() {
         } \
         DHT_LOG_INFO(DHT_LOG_ROOT()) <<  prefix << ": size=" << m.size(); \
     }
+
+
 
 
     XX_PM(g_person_map, "class.map before");
