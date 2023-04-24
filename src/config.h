@@ -382,8 +382,8 @@ public:
      * @return 返回对应的配置参数,如果参数名存在但是类型不匹配则返回nullptr
      * @exception 如果参数名包含非法字符[^0-9a-z_.] 抛出异常 std::invalid_argument
      */
-    template<class T>
     //初始化，判断存在信息、命名规范、创建新对象
+    template<class T>
     static typename ConfigVar<T>::ptr Lookup(const std::string& name,
                                              const T& default_value,
                                              const std::string& description = ""){

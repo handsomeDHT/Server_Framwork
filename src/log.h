@@ -17,6 +17,7 @@
 #include "singleton.h"
 
 
+
 /**
  * @brief 使用流式方式将日志级别level的日志写入到logger
  */
@@ -99,6 +100,7 @@
 
 namespace dht{
 class Logger;
+class LoggerManager;
 /**
  * @brief 日志级别
  */
@@ -260,6 +262,8 @@ protected:
  * @brief 日志器
  */
 class Logger : public std::enable_shared_from_this<Logger> {
+    friend class LoggerManager;
+
 public:
     typedef std::shared_ptr<Logger> ptr;
 
@@ -276,11 +280,15 @@ public:
     LogLevel::Level getLevel() const { return m_level; }
     void setLevel(LogLevel::Level val) { m_level = val; }
     const std::string& getName() const{ return m_name; }
+
+    void setFormatter(LogFormatter::ptr val);
+    void clearAppenders();
 private:
     std::string m_name;                                //日志名称
     LogLevel::Level m_level;                           //日志级别
     std::list<LogAppender::ptr> m_appenders;           //Appender集合
     LogFormatter::ptr m_formatter;                     //
+    Logger::ptr m_root;
 };
 
 //输出到控制台的Appender
