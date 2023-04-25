@@ -410,10 +410,9 @@ public:
         }
         */
 
-        //判断寻找的name 是否符合命名规范
-        if(name.find_first_not_of("abcdefjhijklmnopqrstuvwxyz._012345678")
+        if(name.find_first_not_of("abcdefghijklmnopqrstuvwxyz._012345678")
                 != std::string::npos){
-            DHT_LOG_ERROR(DHT_LOG_ROOT()) << "Lookup name invalid" << name;
+            DHT_LOG_ERROR(DHT_LOG_ROOT()) << "Lookup name invalid :" << name;
             throw std::invalid_argument(name);
         }
         //如果不存在名为name的配置参数，则创建一个新的

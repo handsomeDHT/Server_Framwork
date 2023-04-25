@@ -125,7 +125,7 @@ void test_config(){
 }
 
 void test_yaml(){
-    YAML::Node root = YAML::LoadFile("/home/Server_Framwork/bin/conf/test.yml");
+    YAML::Node root = YAML::LoadFile("/home/Server_Framwork/bin/conf/log.yml");
     //加载log.yml后，进行遍历解析
     print_yaml(root, 0);
 
@@ -210,6 +210,7 @@ void test_class() {
                                      << " new_value=" << new_value.toString();
     });
 
+
     DHT_LOG_INFO(DHT_LOG_ROOT()) << "before: " << g_person->getValue().toString() << " - " << g_person->toString();
 
 #define XX_PM(g_var, prefix) \
@@ -222,10 +223,13 @@ void test_class() {
     }
 
     XX_PM(g_person_map, "class.map before");
+
     DHT_LOG_INFO(DHT_LOG_ROOT()) << "before: " << g_person_vec_map->toString();
+
 
     YAML::Node root = YAML::LoadFile("/home/Server_Framwork/bin/conf/test.yml");
     dht::Config::LoadFromYaml(root);
+
 
     DHT_LOG_INFO(DHT_LOG_ROOT()) << "after: "
             << g_person->getValue().toString()
@@ -233,15 +237,29 @@ void test_class() {
 
     XX_PM(g_person_map, "class.map after");
     DHT_LOG_INFO(DHT_LOG_ROOT()) << "after: " << g_person_vec_map->toString();
-
 }
 
+void test_log() {
+    static dht::Logger::ptr system_log = DHT_LOG_NAME("system");
+    DHT_LOG_INFO(system_log) << "hello system" << std::endl;
+    //std::cout << dht::LoggerMgr::GetInstance()->toYamlString() << std::endl;
+    YAML::Node root = YAML::LoadFile("/home/Server_Framwork/bin/conf/log.yml");
+    dht::Config::LoadFromYaml(root);
+    std::cout << "=============" << std::endl;
+    //std::cout << dht::LoggerMgr::GetInstance()->toYamlString() << std::endl;
+    std::cout << "=============" << std::endl;
+    std::cout << root << std::endl;
+    DHT_LOG_INFO(system_log) << "hello system" << std::endl;
+
+    system_log->setFormatter("%d - %m%n");
+    DHT_LOG_INFO(system_log) << "hello system" << std::endl;
+}
 
 int main(int argc, char** argv){
     //test_config();
     //test_yaml();
-    test_class();
-
+    //test_class();
+    test_log();
 
     return 0;
 }

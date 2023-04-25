@@ -13,11 +13,9 @@ link_directories(./third_part_apps/lib64)
 
 set(LIB_SRC
     src/log.cc
-    src/util.h
     src/util.cc
-    src/singleton.h
-    src/config.h
-    src/config.cc)
+    src/config.cc
+        )
 
 add_library(src SHARED ${LIB_SRC})
 add_executable(test tests/test.cc)

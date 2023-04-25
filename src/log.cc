@@ -676,6 +676,7 @@ public:
     }
 };
 
+
 dht::ConfigVar<std::set<LogDefine>>::ptr g_log_defines =
         dht::Config::Lookup("logs"
                             ,std::set<LogDefine>()
@@ -686,24 +687,29 @@ struct LogIniter {
         g_log_defines->addListener(0xF1E231, [](const std::set<LogDefine>& old_value,
                 const std::set<LogDefine>& new_value) {
             //新增
-            //DHT_LOG_NAME(DHT_LOG_ROOT()) << "on_logger_conf_changed";
+            DHT_LOG_INFO(DHT_LOG_ROOT()) << "on_logger_conf_changed";
             for(auto& i : new_value){
                 auto it = old_value.find(i);
                 dht::Logger::ptr logger;
                 if(it == old_value.end()){
                     //新增logger
-                    logger.reset(new dht::Logger(i.name));
+                    //logger.reset(new dht::Logger(i.name));
+                    logger = DHT_LOG_NAME(i.name);
 
                 }else{
                     if(!(i == *it)){
                         //修改的logger
                         logger = DHT_LOG_NAME(i.name);
+                    } else{
+                        continue;
                     }
                 }
+
                 logger->setLevel(i.level);
                 if(!i.formatter.empty()){
                     logger->setFormatter(i.formatter);
                 }
+
                 logger->clearAppenders();
                 for(auto& a : i.appenders){
                     dht::LogAppender::ptr ap;
