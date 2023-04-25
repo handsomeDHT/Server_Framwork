@@ -97,7 +97,6 @@
  */
 #define DHT_LOG_NAME(name) dht::LoggerMgr::GetInstance()->getLogger(name)
 
-
 namespace dht{
 class Logger;
 class LoggerManager;
@@ -115,6 +114,7 @@ public:
         FATAL = 5
     };
     static const char* ToString(LogLevel::Level level);
+    static LogLevel::Level FromString(const std::string& str);
 };
 
 /**
@@ -247,8 +247,8 @@ public:
                      ,LogLevel::Level level
                      ,LogEvent::ptr event) = 0;
 
-    void setFormatter(LogFormatter::ptr val) { m_formatter = val; }
-    LogFormatter::ptr getFormatter() const { return m_formatter; }
+    void setFormatter(LogFormatter::ptr val) { m_formatter = val;}
+    LogFormatter::ptr getFormatter() const { return m_formatter;}
 
     void setLevel(LogLevel::Level val) {m_level = val; }
     LogLevel::Level getLevel() const { return m_level; }
@@ -282,7 +282,10 @@ public:
     const std::string& getName() const{ return m_name; }
 
     void setFormatter(LogFormatter::ptr val);
+    void setFormatter(const std::string& val);
     void clearAppenders();
+
+    LogFormatter::ptr getFormatter();
 private:
     std::string m_name;                                //日志名称
     LogLevel::Level m_level;                           //日志级别
@@ -336,6 +339,7 @@ private:
 };
 
 typedef dht::Singleton<LoggerManager> LoggerMgr;
+
 }
 
 #endif //SERVER_FRAMWORK_LOG_H
