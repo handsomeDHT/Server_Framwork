@@ -236,6 +236,7 @@ private:
  * @brief 日志输出地
  */
 class LogAppender {
+friend class Logger;
 public:
     typedef std::shared_ptr<LogAppender> ptr;
     virtual ~LogAppender() {};
@@ -251,7 +252,7 @@ public:
 
     virtual std::string toYamlString() = 0;
 
-    void setFormatter(LogFormatter::ptr val) { m_formatter = val;}
+    void setFormatter(LogFormatter::ptr val);
     LogFormatter::ptr getFormatter() const { return m_formatter;}
 
     void setLevel(LogLevel::Level val) {m_level = val; }
@@ -259,6 +260,7 @@ public:
 
 protected:
     LogLevel::Level m_level = LogLevel::DEBUG;
+    bool m_hasFormatter = false;
     LogFormatter::ptr m_formatter;
 };
 

@@ -421,8 +421,8 @@ Logger::Logger(const std::string &name)
 }
 
 void Logger::addAppender(LogAppender::ptr appender) {
-    if(!appender->getFormatter()){
-        appender->setFormatter(m_formatter);
+    if(!appender->getFormatter()) {
+        appender->m_formatter = m_formatter;
     }
     m_appenders.push_back(appender);
 }
@@ -442,9 +442,16 @@ void Logger::clearAppenders() {
 
 void Logger::setFormatter(LogFormatter::ptr val) {
     m_formatter = val;
+
+    for(auto& i : m_appenders) {
+        if(!i->m_hasFormatter) {
+            i->m_formatter = m_formatter;
+        }
+    }
 }
 
 void Logger::setFormatter(const std::string &val) {
+    std::cout << "---" << val << std::endl;
     dht::LogFormatter::ptr new_val(new dht::LogFormatter(val));
     if(new_val->isError()){
         std::cout << "Logger setFormatter name=" <<m_name
@@ -452,7 +459,7 @@ void Logger::setFormatter(const std::string &val) {
                   <<std::endl;
         return;
     }
-    m_formatter = new_val;
+    setFormatter(new_val);
 }
 
 std::string Logger::toYamlString(){
@@ -511,6 +518,16 @@ void Logger::fatal(LogEvent::ptr event) {
 /**---------------------------------------**/
 /**--------------日志输出控制---------------**/
 /**---------------------------------------**/
+
+void LogAppender::setFormatter(LogFormatter::ptr val) {
+    m_formatter = val;
+    if(m_formatter) {
+        m_hasFormatter = true;
+    } else {
+        m_hasFormatter = false;
+    }
+}
+
 FileLogAppender::FileLogAppender(const std::string &filename) : m_filename(filename) {
     reopen();
 }
@@ -536,14 +553,19 @@ std::string FileLogAppender::toYamlString() {
     YAML::Node node;
     node["type"] = "FileLogAppender";
     node["file"] = m_filename;
-    node["level"] = LogLevel::ToString(m_level);
-    if(!m_formatter){
+
+
+    if(m_level != LogLevel::UNKNOW){
+        node["level"] = LogLevel::ToString(m_level);
+    }
+    if(m_hasFormatter && m_formatter){
         node["formatter"] = m_formatter->getPattern();
     }
+
+
     std::stringstream ss;
     ss << node;
     return ss.str();
-
 }
 
 //输出
@@ -556,10 +578,14 @@ void StdoutLogAppender::log(std::shared_ptr<Logger> logger ,LogLevel::Level leve
 std::string StdoutLogAppender::toYamlString() {
     YAML::Node node;
     node["type"] = "StdoutLogAppender";
-    node["level"] = LogLevel::ToString(m_level);
-    if(!m_formatter){
+
+    if(m_level != LogLevel::UNKNOW){
+        node["level"] = LogLevel::ToString(m_level);
+    }
+    if(m_hasFormatter && m_formatter){
         node["formatter"] = m_formatter->getPattern();
     }
+
     std::stringstream ss;
     ss << node;
     return ss.str();
@@ -728,49 +754,58 @@ dht::ConfigVar<std::set<LogDefine>>::ptr g_log_defines =
 
 struct LogIniter {
     LogIniter() {
-        g_log_defines->addListener(0xF1E231, [](const std::set<LogDefine>& old_value,
-                const std::set<LogDefine>& new_value) {
-            //新增
+        g_log_defines->addListener([](const std::set<LogDefine>& old_value,
+                                      const std::set<LogDefine>& new_value){
             DHT_LOG_INFO(DHT_LOG_ROOT()) << "on_logger_conf_changed";
-            for(auto& i : new_value){
+            for(auto& i : new_value) {
                 auto it = old_value.find(i);
                 dht::Logger::ptr logger;
-                if(it == old_value.end()){
+                if(it == old_value.end()) {
                     //新增logger
-                    //logger.reset(new dht::Logger(i.name));
                     logger = DHT_LOG_NAME(i.name);
-
-                }else{
-                    if(!(i == *it)){
+                } else {
+                    if(!(i == *it)) {
                         //修改的logger
                         logger = DHT_LOG_NAME(i.name);
-                    } else{
+                    } else {
                         continue;
                     }
                 }
-
                 logger->setLevel(i.level);
-                if(!i.formatter.empty()){
+                //std::cout << "** " << i.name << " level=" << i.level
+                //<< "  " << logger << std::endl;
+                if(!i.formatter.empty()) {
                     logger->setFormatter(i.formatter);
                 }
 
                 logger->clearAppenders();
-                for(auto& a : i.appenders){
+                for(auto& a : i.appenders) {
                     dht::LogAppender::ptr ap;
-                    if(a.type == 1){
+                    if(a.type == 1) {
                         ap.reset(new FileLogAppender(a.file));
-                    }else if(a.type == 2){
+                    } else if(a.type == 2) {
                         ap.reset(new StdoutLogAppender);
                     }
+                    ap->setLevel(a.level);
+                    if(!a.formatter.empty()) {
+                        LogFormatter::ptr fmt(new LogFormatter(a.formatter));
+                        if(!fmt->isError()) {
+                            ap->setFormatter(fmt);
+                        } else {
+                            std::cout << "log.name=" << i.name << " appender type=" << a.type
+                                      << " formatter=" << a.formatter << " is invalid" << std::endl;
+                        }
+                    }
+                    logger->addAppender(ap);
                 }
             }
-            //修改
-            for(auto& i : old_value){
+
+            for(auto& i : old_value) {
                 auto it = new_value.find(i);
-                if(it == new_value.end()){
+                if(it == new_value.end()) {
                     //删除logger
                     auto logger = DHT_LOG_NAME(i.name);
-                    logger->setLevel((LogLevel::Level)100);
+                    logger->setLevel((LogLevel::Level)0);
                     logger->clearAppenders();
                 }
             }
@@ -789,8 +824,8 @@ std::string LoggerManager::toYamlString() {
     std::stringstream ss;
     ss << node;
     return ss.str();
-
 }
+
 void LoggerManager::init() {}
 
 }

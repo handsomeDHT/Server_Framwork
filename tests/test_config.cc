@@ -242,11 +242,14 @@ void test_class() {
 void test_log() {
     static dht::Logger::ptr system_log = DHT_LOG_NAME("system");
     DHT_LOG_INFO(system_log) << "hello system" << std::endl;
-    //std::cout << dht::LoggerMgr::GetInstance()->toYamlString() << std::endl;
+    std::cout << " test1: " << dht::LoggerMgr::GetInstance()->toYamlString() << std::endl;
+
+
     YAML::Node root = YAML::LoadFile("/home/Server_Framwork/bin/conf/log.yml");
     dht::Config::LoadFromYaml(root);
     std::cout << "=============" << std::endl;
-    //std::cout << dht::LoggerMgr::GetInstance()->toYamlString() << std::endl;
+    std::cout << " test2: "  << dht::LoggerMgr::GetInstance()->toYamlString() << std::endl;
+
     std::cout << "=============" << std::endl;
     std::cout << root << std::endl;
     DHT_LOG_INFO(system_log) << "hello system" << std::endl;
