@@ -491,7 +491,6 @@ void Logger::log(LogLevel::Level level, LogEvent::ptr event) {
         } else if(m_root) {
             m_root->log(level, event);
         }
-
     }
 }
 
