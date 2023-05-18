@@ -813,6 +813,7 @@ struct LogIniter {
     }
 };
 
+//加载时初始化，实例化为全局对象
 static LogIniter __log_init;
 
 std::string LoggerManager::toYamlString() {

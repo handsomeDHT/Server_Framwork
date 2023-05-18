@@ -244,7 +244,6 @@ void test_log() {
     DHT_LOG_INFO(system_log) << "hello system" << std::endl;
     std::cout << " test1: " << dht::LoggerMgr::GetInstance()->toYamlString() << std::endl;
 
-
     YAML::Node root = YAML::LoadFile("/home/Server_Framwork/bin/conf/log.yml");
     dht::Config::LoadFromYaml(root);
     std::cout << "=============" << std::endl;
@@ -253,6 +252,7 @@ void test_log() {
     std::cout << "=============" << std::endl;
     std::cout << root << std::endl;
     DHT_LOG_INFO(system_log) << "hello system" << std::endl;
+    std::cout << "----------" << std::endl;
 
     system_log->setFormatter("%d - %m%n");
     DHT_LOG_INFO(system_log) << "hello system" << std::endl;

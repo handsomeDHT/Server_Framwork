@@ -8,8 +8,6 @@ namespace dht{
 
 //ConfigVarBase::ConfigVarBase(const std::string &name, const std::string &description) {}
 
-
-
 ConfigVarBase::ptr Config::LookupBase(const std::string &name) {
     auto it = GetDatas().find(name);
     return it == GetDatas().end()? nullptr : it->second;
@@ -18,7 +16,7 @@ ConfigVarBase::ptr Config::LookupBase(const std::string &name) {
 /**
  * @brief 读取yml文件中的配置信息
  * @param prefix
- * 逐层递归进行遍历，并将遍历出来的
+ * 逐层递归进行遍历，并将遍历出来的压入output
  */
 static void ListAllMember (const std::string& prefix
                            ,const YAML::Node& node
@@ -56,10 +54,12 @@ void Config::LoadFromYaml(const YAML::Node &root) {
             continue;
         }
 
+        //std::transform：在给定范围内应用于给定操作，并将结果存储在指定的另一个范围内
         std::transform(key.begin()
                        , key.end()
                        , key.begin()
                        , ::tolower);
+
         ConfigVarBase::ptr var = LookupBase(key);
         //将从log.yml中的信息加载到log配置信息中去
         if(var){
