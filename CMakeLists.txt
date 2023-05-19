@@ -22,15 +22,28 @@ set(LIB_SRC
 add_library(src SHARED ${LIB_SRC})
 force_redefine_file_macro_for_sources(src) #__FILE__
 
-add_executable(test tests/test.cc)
+find_library(PTHREAD pthread)
+find_library(YAMLCPP yaml-cpp)
+set(LIB_LIB
+        src
+        pthread
+        yaml-cpp
+)
+
+add_executable(test tests/test.cc tests/test.cc)
 add_dependencies(test src)
 force_redefine_file_macro_for_sources(test) #__FILE__
-target_link_libraries(test src yaml-cpp)
+target_link_libraries(test ${LIB_LIB})
 
 add_executable(test_config tests/test_config.cc)
 add_dependencies(test_config src)
 force_redefine_file_macro_for_sources(test_config) #__FILE__
-target_link_libraries(test_config src yaml-cpp)
+target_link_libraries(test_config ${LIB_LIB})
+
+add_executable(test_thread tests/test_thread.cc)
+add_dependencies(test_thread src)
+force_redefine_file_macro_for_sources(test_thread) #__FILE__
+target_link_libraries(test_thread ${LIB_LIB})
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
