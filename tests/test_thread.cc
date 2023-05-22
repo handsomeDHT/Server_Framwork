@@ -6,11 +6,18 @@
 
 dht::Logger::ptr g_logger = DHT_LOG_ROOT();
 
+int count = 0;
+dht::RWMutex s_mutex;
+
 void fun1(){
     DHT_LOG_INFO(g_logger) << "name: " << dht::Thread::GetName()
                             << " this.name: " << dht::Thread::GetThis()->getName()
                             << " id: " << dht::GetThreadId()
                             << " this.id: " << dht::Thread::GetThis()->getId();
+    for(int i =0; i < 100; i++){
+        dht::RWMutex::WriteLock lock(s_mutex);
+        count++;
+    }
 }
 
 void fun2(){
@@ -28,5 +35,6 @@ int main(int argc, char** argv){
         thrs[i] ->join();
     }
     DHT_LOG_INFO(g_logger) << "Thread test end";
+    DHT_LOG_INFO(g_logger) << "count: " <<count;
     return 0;
 }
