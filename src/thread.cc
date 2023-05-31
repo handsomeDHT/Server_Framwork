@@ -25,7 +25,7 @@ Semaphore::~Semaphore() {
 }
 
 void Semaphore::wait() {
-        if(!sem_wait(&m_semaphore)){
+        if(sem_wait(&m_semaphore)){
             throw std::logic_error("sem_wait error");
         }
 }
