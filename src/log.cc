@@ -550,9 +550,16 @@ FileLogAppender::FileLogAppender(const std::string &filename) : m_filename(filen
 void FileLogAppender::log(std::shared_ptr<Logger> logger
                           , LogLevel::Level level, LogEvent::ptr event) {
     if (level >= m_level) {
+        uint64_t now = time(0);
+        if(now >= (m_lastTime + 3)) {
+            reopen();
+            m_lastTime = now;
+        }
         MutexType::Lock lock(m_mutex);
         //m_filestream << m_formatter.format(event)原文写的是这样的
-        m_filestream << m_formatter->format(logger, level, event);
+        if(!(m_filestream << m_formatter->format(logger, level, event))){
+            std::cout << "error" << std::endl;
+        }
     }
 }
 
