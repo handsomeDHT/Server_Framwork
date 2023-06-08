@@ -17,7 +17,7 @@ set(LIB_SRC
     src/log.cc
     src/util.cc
     src/config.cc
-    src/thread.cc)
+    src/thread.cc src/macro.h)
 
 add_library(src SHARED ${LIB_SRC})
 force_redefine_file_macro_for_sources(src) #__FILE__
@@ -44,6 +44,11 @@ add_executable(test_thread tests/test_thread.cc)
 add_dependencies(test_thread src)
 force_redefine_file_macro_for_sources(test_thread) #__FILE__
 target_link_libraries(test_thread ${LIB_LIB})
+
+add_executable(test_util tests/test_util.cc)
+add_dependencies(test_util src)
+force_redefine_file_macro_for_sources(test_util) #__FILE__
+target_link_libraries(test_util ${LIB_LIB})
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
