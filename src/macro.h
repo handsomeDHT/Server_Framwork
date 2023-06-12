@@ -24,7 +24,7 @@
         DHT_LOG_ERROR(DHT_LOG_ROOT()) << "ASSERTION: " #x \
             << "\n" << w \
             << "\n backtrace: \n"  \
-            << dht::BacktraceToString(100, 2, "    ");    \
+            << dht::BacktraceToString(100 , 2, "    ");    \
         assert(x);               \
     }
 
