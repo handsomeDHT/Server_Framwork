@@ -32,7 +32,7 @@ set(LIB_LIB
         yaml-cpp
 )
 
-add_executable(test tests/test.cc tests/test.cc)
+add_executable(test tests/test.cc)
 add_dependencies(test src)
 force_redefine_file_macro_for_sources(test) #__FILE__
 target_link_libraries(test ${LIB_LIB})
@@ -51,6 +51,11 @@ add_executable(test_util tests/test_util.cc)
 add_dependencies(test_util src)
 force_redefine_file_macro_for_sources(test_util) #__FILE__
 target_link_libraries(test_util ${LIB_LIB})
+
+add_executable(test_fiber tests/test_fiber.cc)
+add_dependencies(test_fiber src)
+force_redefine_file_macro_for_sources(test_fiber) #__FILE__
+target_link_libraries(test_fiber ${LIB_LIB})
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)

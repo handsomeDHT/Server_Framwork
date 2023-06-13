@@ -26,7 +26,7 @@
     if(logger->getLevel() <= level) \
         dht::LogEventWrap(dht::LogEvent::ptr(new dht::LogEvent(logger, level, \
                         __FILE__, __LINE__, 0, dht::GetThreadId(),\
-                dht::GetFiberId(), time(0)/*, dht::Thread::GetName()*/))).getSS()
+                dht::GetFiberId(), time(0), dht::Thread::GetName()))).getSS()
 
 
 /**
@@ -61,7 +61,7 @@
     if(logger->getLevel() <= level)                \
         dht::LogEventWrap(dht::LogEvent::ptr(new dht::LogEvent(logger, level, \
                         __FILE__, __LINE__, 0, dht::GetThreadId(),\
-                dht::GetFiberId(), time(0)/*, dht::Thread::GetName()*/))).getEvent()->format(fmt, __VA_ARGS__)
+                dht::GetFiberId(), time(0), dht::Thread::GetName()))).getEvent()->format(fmt, __VA_ARGS__)
 
 /**
  * @brief 使用格式化方式将日志级别debug的日志写入到logger
@@ -130,7 +130,8 @@ public:
              ,int32_t m_line, uint32_t elapse
              ,uint32_t thread_id
              ,uint32_t fiber_id
-             ,uint64_t time);
+             ,uint64_t time
+            ,const std::string& thread_name);
 
     const char* getFile() const { return m_file; }
     int32_t getLine() const { return m_line;}

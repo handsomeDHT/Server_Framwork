@@ -3,8 +3,7 @@
 //
 
 #include <execinfo.h>
-#include "util.h"
-#include "log.h"
+#include "dht.h"
 
 namespace dht{
 
@@ -13,8 +12,9 @@ static dht::Logger::ptr g_logger = DHT_LOG_NAME("system");
 pid_t GetThreadId() {
     return syscall(SYS_gettid);
 }
+
 u_int32_t GetFiberId(){
-    return 0;
+    return dht::Fiber::GetFiberId();
 }
 
 void Backtrace(std::vector<std::string>& bt, int size, int skip) {

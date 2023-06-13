@@ -13,7 +13,7 @@ static std::atomic<uint64_t> s_fiber_id {0};
 static std::atomic<uint64_t> s_fiber_count {0};
 
 static thread_local Fiber* t_fiber = nullptr;
-static thread_local std::shared_ptr<Fiber::ptr> t_threadFiber =nullptr;
+static thread_local Fiber::ptr t_threadFiber =nullptr;
 
 static ConfigVar<uint32_t>::ptr g_fiber_stack_size =
         Config::Lookup<uint32_t>("fiber.stack_size", 128 * 1024, "fiber stack size");
@@ -31,6 +31,13 @@ public:
 
 using StackAllocator = MallocStackAllocator;
 
+uint64_t Fiber::GetFiberId() {
+    if(t_fiber) {
+        return t_fiber->getId();
+    }
+    return 0;
+}
+
 Fiber::Fiber() {
     m_state = EXEC;
     SetThis(this);
@@ -43,7 +50,7 @@ Fiber::Fiber() {
     DHT_LOG_DEBUG(g_logger) << "Fiber::Fiber main";
 }
 
-Fiber::Fiber(std::function<void()> cb, size_t stacksize, bool use_caller)
+Fiber::Fiber(std::function<void()> cb, size_t stacksize)
     :m_id(++s_fiber_id)
     ,m_cb(cb) {
     ++s_fiber_count;
@@ -57,11 +64,15 @@ Fiber::Fiber(std::function<void()> cb, size_t stacksize, bool use_caller)
     m_ctx.uc_stack.ss_sp = m_stack;
     m_ctx.uc_stack.ss_size = m_stacksize;
 
+    makecontext(&m_ctx, &Fiber::MainFunc, 0);
+
+    /*
      if(!use_caller) {
          makecontext(&m_ctx, &Fiber::MainFunc, 0);
      } else {
          makecontext(&m_ctx, &Fiber::CallerMainFunc, 0);
      }
+     */
 
     DHT_LOG_DEBUG(g_logger) << "Fiber::Fiber id=" << m_id;
 }
@@ -69,7 +80,7 @@ Fiber::Fiber(std::function<void()> cb, size_t stacksize, bool use_caller)
 Fiber::~Fiber() {
     --s_fiber_count;
     if(m_stack){
-        DHT_ASSERT(m_state == TERM || m_state == INIT);
+        DHT_ASSERT(m_state == TERM || m_state == EXCEPT || m_state == INIT);
         StackAllocator::Dealloc(m_stack, m_stacksize);
     }else{
         DHT_ASSERT(!m_cb);
@@ -81,23 +92,149 @@ Fiber::~Fiber() {
         }
     }
     DHT_LOG_DEBUG(g_logger) << "Fiber::~fiber id=" << m_id
-                            << "total= " << s_fiber_count;
+                            << " total= " << s_fiber_count;
 }
 
-void Fiber::swapIn() {}
+void Fiber::reset(std::function<void()> cb) {
+    DHT_ASSERT(m_stack);
+    DHT_ASSERT(m_state == TERM || m_state == EXCEPT || m_state == INIT);
+    m_cb = cb;
+    if(getcontext(&m_ctx)){
+        DHT_ASSERT2(false, "getcontext");
+    }
 
-void Fiber::swapOut() {}
+    m_ctx.uc_link = nullptr;
+    m_ctx.uc_stack.ss_sp = m_stack;
+    m_ctx.uc_stack.ss_size = m_stacksize;
+    makecontext(&m_ctx, &Fiber::MainFunc, 0);
 
-void Fiber::SetThis(Fiber *f) {}
+    m_state = INIT;
+}
 
-Fiber::ptr Fiber::GetThis() {}
+/*
+void Fiber::call() {
+    SetThis(this);
+    m_state = EXEC;
+    if(swapcontext(&t_threadFiber->m_ctx, &m_ctx)) {
+        DHT_ASSERT2(false, "swapcontext");
+    }
+}
+ */
 
-void Fiber::YieldToReady() {}
+/*
+void Fiber::back() {
+    SetThis(t_threadFiber.get());
+    if(swapcontext(&m_ctx, &t_threadFiber->m_ctx)) {
+        DHT_ASSERT2(false, "swapcontext");
+    }
+}
+*/
 
-void Fiber::YieldToHold() {}
+void Fiber::swapIn() {
+    SetThis(this);
+    DHT_ASSERT(m_state != EXEC);
+    m_state = EXEC;
+    if(swapcontext(&t_threadFiber->m_ctx, &m_ctx)) {
+        DHT_ASSERT2(false, "swapcontext");
+    }
+}
 
-uint64_t Fiber::TotalFibers() {}
+void Fiber::swapOut() {
+    SetThis(t_threadFiber.get());
 
-void Fiber::MainFunc() {}
+    if(swapcontext(&m_ctx, &t_threadFiber->m_ctx)){
+        DHT_ASSERT2(false, "swapcontext");
+    }
+}
+
+void Fiber::SetThis(Fiber *f) {
+    t_fiber = f;
+    //t_fiber->m_state = INIT;
+}
+
+Fiber::ptr Fiber::GetThis() {
+    if(t_fiber){
+        return t_fiber->shared_from_this();
+    }
+    Fiber::ptr main_fiber(new Fiber);
+    DHT_ASSERT(t_fiber == main_fiber.get());
+    t_threadFiber = main_fiber;
+    return t_fiber->shared_from_this();
+}
+
+void Fiber::YieldToReady() {
+    Fiber::ptr cur = GetThis();
+    DHT_ASSERT(cur->m_state == EXEC);
+    cur->m_state = READY;
+    cur->swapOut();
+}
+
+void Fiber::YieldToHold() {
+    Fiber::ptr cur = GetThis();
+    DHT_ASSERT(cur->m_state == EXEC);
+    cur->m_state = HOLD;
+    cur->swapOut();
+}
+
+uint64_t Fiber::TotalFibers() {
+    return s_fiber_count;
+}
+
+void Fiber::MainFunc() {
+    Fiber::ptr cur = GetThis();
+    DHT_ASSERT(cur);
+    try {
+        cur->m_cb();
+        cur->m_cb = nullptr;
+        cur->m_state = TERM;
+    } catch (std::exception& ex) {
+        cur->m_state = EXCEPT;
+        DHT_LOG_ERROR(g_logger) << "Fiber Except: " << ex.what()
+                                  << " fiber_id=" << cur->getId()
+                                  << std::endl
+                                  << dht::BacktraceToString();
+    } catch (...) {
+        cur->m_state = EXCEPT;
+        DHT_LOG_ERROR(g_logger) << "Fiber Except"
+                                  << " fiber_id=" << cur->getId()
+                                  << std::endl
+                                  << dht::BacktraceToString();
+    }
+
+    auto raw_ptr = cur.get();
+    cur.reset();
+    raw_ptr->swapOut();
+
+    DHT_ASSERT2(false, "never reach fiber_id=" + std::to_string(raw_ptr->getId()));
+}
+
+/*
+void Fiber::CallerMainFunc() {
+    Fiber::ptr cur = GetThis();
+    DHT_ASSERT(cur);
+    try {
+        cur->m_cb();
+        cur->m_cb = nullptr;
+        cur->m_state = TERM;
+    } catch (std::exception& ex) {
+        cur->m_state = EXCEPT;
+        DHT_LOG_ERROR(g_logger) << "Fiber Except: " << ex.what()
+                                  << " fiber_id=" << cur->getId()
+                                  << std::endl
+                                  << dht::BacktraceToString();
+    } catch (...) {
+        cur->m_state = EXCEPT;
+        DHT_LOG_ERROR(g_logger) << "Fiber Except"
+                                  << " fiber_id=" << cur->getId()
+                                  << std::endl
+                                  << dht::BacktraceToString();
+    }
+
+    auto raw_ptr = cur.get();
+    cur.reset();
+    raw_ptr->back();
+    DHT_ASSERT2(false, "never reach fiber_id=" + std::to_string(raw_ptr->getId()));
+}
+ */
 
 }
