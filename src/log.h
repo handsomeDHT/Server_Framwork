@@ -17,8 +17,6 @@
 #include "singleton.h"
 #include "thread.h"
 
-
-
 /**
  * @brief 使用流式方式将日志级别level的日志写入到logger
  */
@@ -28,30 +26,10 @@
                         __FILE__, __LINE__, 0, dht::GetThreadId(),\
                 dht::GetFiberId(), time(0), dht::Thread::GetName()))).getSS()
 
-
-/**
- * @brief 使用流式方式将日志级别debug的日志写入到logger
- */
 #define DHT_LOG_DEBUG(logger) DHT_LOG_LEVEL(logger, dht::LogLevel::DEBUG)
-
-/**
- * @brief 使用流式方式将日志级别info的日志写入到logger
- */
 #define DHT_LOG_INFO(logger) DHT_LOG_LEVEL(logger, dht::LogLevel::INFO)
-
-/**
- * @brief 使用流式方式将日志级别warn的日志写入到logger
- */
 #define DHT_LOG_WARN(logger) DHT_LOG_LEVEL(logger, dht::LogLevel::WARN)
-
-/**
- * @brief 使用流式方式将日志级别error的日志写入到logger
- */
 #define DHT_LOG_ERROR(logger) DHT_LOG_LEVEL(logger, dht::LogLevel::ERROR)
-
-/**
- * @brief 使用流式方式将日志级别fatal的日志写入到logger
- */
 #define DHT_LOG_FATAL(logger) DHT_LOG_LEVEL(logger, dht::LogLevel::FATAL)
 
 /**
@@ -63,29 +41,10 @@
                         __FILE__, __LINE__, 0, dht::GetThreadId(),\
                 dht::GetFiberId(), time(0), dht::Thread::GetName()))).getEvent()->format(fmt, __VA_ARGS__)
 
-/**
- * @brief 使用格式化方式将日志级别debug的日志写入到logger
- */
 #define DHT_LOG_FMT_DEBUG(logger, fmt, ...) DHT_LOG_FMT_LEVEL(logger, dht::LogLevel::DEBUG, fmt, __VA_ARGS__)
-
-/**
- * @brief 使用格式化方式将日志级别info的日志写入到logger
- */
 #define DHT_LOG_FMT_INFO(logger, fmt, ...)  DHT_LOG_FMT_LEVEL(logger, dht::LogLevel::INFO, fmt, __VA_ARGS__)
-
-/**
- * @brief 使用格式化方式将日志级别warn的日志写入到logger
- */
 #define DHT_LOG_FMT_WARN(logger, fmt, ...)  DHT_LOG_FMT_LEVEL(logger, dht::LogLevel::WARN, fmt, __VA_ARGS__)
-
-/**
- * @brief 使用格式化方式将日志级别error的日志写入到logger
- */
 #define DHT_LOG_FMT_ERROR(logger, fmt, ...) DHT_LOG_FMT_LEVEL(logger, dht::LogLevel::ERROR, fmt, __VA_ARGS__)
-
-/**
- * @brief 使用格式化方式将日志级别fatal的日志写入到logger
- */
 #define DHT_LOG_FMT_FATAL(logger, fmt, ...) DHT_LOG_FMT_LEVEL(logger, dht::LogLevel::FATAL, fmt, __VA_ARGS__)
 
 /**
@@ -158,6 +117,7 @@ private:
     std::stringstream m_ss;
     std::string m_content;         //消息
     std::string m_threadName;      //线程名称
+
     std::shared_ptr<Logger> m_logger;
     LogLevel::Level m_level;
 

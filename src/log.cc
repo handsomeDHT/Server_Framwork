@@ -136,6 +136,16 @@ public:
     }
 };
 
+class ThreadNameFormatItem : public LogFormatter::FormatItem {
+public:
+    explicit ThreadNameFormatItem(const std::string& str = "") {}
+    void format(std::ostream& os, Logger::ptr logger
+            , LogLevel::Level level
+            , LogEvent::ptr event) override {
+        os << event->getThreadName();
+    }
+};
+
 class FiberIdFormatItem : public LogFormatter::FormatItem{
 public:
     explicit FiberIdFormatItem(const std::string& str = "") {}
@@ -144,6 +154,17 @@ public:
                 , LogLevel::Level level
                 , LogEvent::ptr event) override{
         os << event->getFiberID();
+    }
+};
+
+class FilenameFormatItem : public LogFormatter::FormatItem{
+public:
+    explicit FilenameFormatItem(const std::string& str = "") {}
+    void format(std::ostream &os
+            , Logger::ptr logger
+            , LogLevel::Level level
+            , LogEvent::ptr event) override{
+        os << event->getFile();
     }
 };
 
@@ -168,17 +189,6 @@ public:
     }
 private:
     std::string m_format;
-};
-
-class FilenameFormatItem : public LogFormatter::FormatItem{
-public:
-    explicit FilenameFormatItem(const std::string& str = "") {}
-    void format(std::ostream &os
-                , Logger::ptr logger
-                , LogLevel::Level level
-                , LogEvent::ptr event) override{
-        os << event->getFile();
-    }
 };
 
 class LineFormatItem : public LogFormatter::FormatItem{
@@ -228,16 +238,6 @@ public:
     }
 private:
     std::string m_string;
-};
-
-class ThreadNameFormatItem : public LogFormatter::FormatItem {
-public:
-    explicit ThreadNameFormatItem(const std::string& str = "") {}
-    void format(std::ostream& os, Logger::ptr logger
-                , LogLevel::Level level
-                , LogEvent::ptr event) override {
-        os << event->getThreadName();
-    }
 };
 
 LogFormatter::LogFormatter(const std::string& pattern)
@@ -373,7 +373,8 @@ void LogFormatter::init() {
 /**---------------------------------------**/
 LogEvent::LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level,
                     const char *file, int32_t line, uint32_t elapse
-                   , uint32_t thread_id, uint32_t fiber_id,uint64_t time,const std::string& thread_name)
+                   , uint32_t thread_id, uint32_t fiber_id,uint64_t time
+                   , const std::string& thread_name)
                    :m_file(file)
                    ,m_line(line)
                    ,m_elapse(elapse)
@@ -419,7 +420,7 @@ Logger::Logger(const std::string &name)
     %f->文件名
     %l->输出日志事件发生的位置，包括类目名，发生的线程，以及在代码中的行数
     */
-    m_formatter.reset(new LogFormatter("%d{%Y-%m-%d %H:%M:%S}%T%t%T%F%T[%p]%T[%c]%T%f:%l%T%m%n"));
+    m_formatter.reset(new LogFormatter("%d{%Y-%m-%d %H:%M:%S}%T%t%T%N%T%F%T[%p]%T[%c]%T%f:%l%T%m%n"));
 }
 
 void Logger::addAppender(LogAppender::ptr appender) {

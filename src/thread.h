@@ -242,12 +242,14 @@ private:
 class Thread{
 public:
     typedef std::shared_ptr<Thread> ptr;
+    //构造函数，[cb]线程执行函数，[name]线程名称
     Thread(std::function<void()> cb, const std::string& name);
     ~Thread();
 
     pid_t getId() const { return m_id; }
     const std::string& getName() const { return m_name; }
 
+    //等待线程执行完成
     void join();
 
     static Thread* GetThis();  //拿到自己当前的线程
