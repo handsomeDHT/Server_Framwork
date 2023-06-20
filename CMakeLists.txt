@@ -18,8 +18,9 @@ set(LIB_SRC
     src/util.cc
     src/config.cc
     src/thread.cc
-    src/macro.h
-    src/fiber.cc)
+    src/macro.cc
+    src/fiber.cc
+    src/scheduler.cc)
 
 add_library(src SHARED ${LIB_SRC})
 force_redefine_file_macro_for_sources(src) #__FILE__

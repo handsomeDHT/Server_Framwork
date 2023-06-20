@@ -12,5 +12,6 @@
 #include "util.h"
 #include "macro.h"
 #include "fiber.h"
+#include "scheduler.h"
 
 #endif //SERVER_FRAMWORK_DHT_H
