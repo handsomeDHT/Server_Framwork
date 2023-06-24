@@ -3,8 +3,12 @@
 #ifndef SERVER_FRAMWORK_SCHEDULER_H
 #define SERVER_FRAMWORK_SCHEDULER_H
 
-#include "dht.h"
 #include <memory>
+#include <vector>
+#include <list>
+#include <iostream>
+#include "fiber.h"
+#include "thread.h"
 
 
 namespace dht{
@@ -78,6 +82,11 @@ public:
     }
 protected:
     virtual void tickle(); //通知协程调度器有任务了
+    void run(); //核心内容，分配协程和线程之间的调度关系
+    virtual bool stopping();
+    virtual void idle(); //什么都不做的时候，执行idle(没任务的情况下)
+
+    void setThis();
 private:
     /**
      * @brief 协程调度启动(无锁)
@@ -158,7 +167,17 @@ private:
     MutexType m_mutex;
     std::vector<Thread::ptr> m_threads;
     std::list<FiberAndThread> m_fibers;//即将要执行的、计划要执行的协程
+    //std::map<int, std::list<FiberAndThread> > m_thrFibers;
+    Fiber::ptr m_rootFiber; //主协程
     std::string m_name;
+protected:
+    std::vector<int> m_threadIds;
+    size_t m_threadCount = 0;
+    std::atomic<size_t> m_activeThreadCount = {0};
+    std::atomic<size_t> m_idleThreadCount = {0};
+    bool m_stopping = true;
+    bool m_autoStop = false;
+    int m_rootThread = 0;
 };
 }
 

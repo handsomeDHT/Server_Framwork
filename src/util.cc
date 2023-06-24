@@ -3,7 +3,9 @@
 //
 
 #include <execinfo.h>
-#include "dht.h"
+#include "log.h"
+#include "fiber.h"
+#include "util.h"
 
 namespace dht{
 

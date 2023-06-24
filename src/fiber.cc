@@ -3,6 +3,10 @@
 //
 
 #include "fiber.h"
+#include "config.h"
+#include "macro.h"
+#include "log.h"
+#include "scheduler.h"
 #include <atomic>
 
 namespace dht{

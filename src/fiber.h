@@ -8,10 +8,13 @@
 #include <memory>
 #include <ucontext.h>
 #include <functional>
-#include "dht.h"
 
 namespace dht{
-class Fiber : public std::enable_shared_from_this<Fiber>{
+
+class Scheduler;
+
+class Fiber : public std::enable_shared_from_this<Fiber> {
+    friend class Scheduler;
 public:
     typedef std::shared_ptr<Fiber> ptr;
 
