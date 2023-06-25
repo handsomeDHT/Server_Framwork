@@ -14,7 +14,7 @@ namespace dht{
 class Scheduler;
 
 class Fiber : public std::enable_shared_from_this<Fiber> {
-    friend class Scheduler;
+friend class Scheduler;
 public:
     typedef std::shared_ptr<Fiber> ptr;
 
@@ -69,7 +69,7 @@ public:
      * @brief 将当前线程切换到执行状态
      * @pre 执行的为当前线程的主协程
      */
-    // void call();
+    void call();
 
 
     /**

@@ -115,7 +115,7 @@ void Fiber::reset(std::function<void()> cb) {
     m_state = INIT;
 }
 
-/*
+
 void Fiber::call() {
     SetThis(this);
     m_state = EXEC;
@@ -123,7 +123,7 @@ void Fiber::call() {
         DHT_ASSERT2(false, "swapcontext");
     }
 }
- */
+
 
 /*
 void Fiber::back() {
@@ -138,15 +138,15 @@ void Fiber::swapIn() {
     SetThis(this);
     DHT_ASSERT(m_state != EXEC);
     m_state = EXEC;
-    if(swapcontext(&t_threadFiber->m_ctx, &m_ctx)) {
+    if(swapcontext(&Scheduler::GetMainFiber()->m_ctx, &m_ctx)) {
         DHT_ASSERT2(false, "swapcontext");
     }
 }
 
 void Fiber::swapOut() {
-    SetThis(t_threadFiber.get());
+    SetThis(Scheduler::GetMainFiber());
 
-    if(swapcontext(&m_ctx, &t_threadFiber->m_ctx)){
+    if(swapcontext(&m_ctx, &Scheduler::GetMainFiber()->m_ctx)){
         DHT_ASSERT2(false, "swapcontext");
     }
 }

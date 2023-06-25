@@ -65,6 +65,13 @@ void Scheduler::start() {
                                       , m_name + "_" + std::to_string(i)));
         m_threadIds.push_back(m_threads[i]->getId());
     }
+    lock.unlock();
+
+    if(m_rootFiber){
+        //m_rootFiber->swapIn();
+        m_rootFiber->call();
+        DHT_LOG_INFO(g_logger) << "call out";
+    }
 }
 
 void Scheduler::stop() {
@@ -182,6 +189,7 @@ void Scheduler::run() {
             }
         }else {    //两种任务都为空，说明已经执行完了，此时用idle来进行执行
             if(idle_fiber->getState() == Fiber::TERM) {
+                DHT_LOG_INFO(g_logger) << "idle fiber term";
                 break;
             }
 
@@ -198,21 +206,22 @@ void Scheduler::run() {
 }
 
 bool Scheduler::stopping() {
-    return false;
+    MutexType::Lock lock(m_mutex);
+    return m_autoStop && m_stopping
+            && m_fibers.empty() && m_activeThreadCount == 0;
 }
 
 void Scheduler::setThis() {
     t_scheduler = this;
 }
 
-/*
 void Scheduler::tickle() {
-
+    DHT_LOG_INFO(g_logger) << "tickle";
 }
 
 void Scheduler::idle() {
-
+    DHT_LOG_INFO(g_logger) << "idle";
 }
-*/
+
 
 }
