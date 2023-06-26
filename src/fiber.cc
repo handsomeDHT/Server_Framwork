@@ -54,7 +54,7 @@ Fiber::Fiber() {
     DHT_LOG_DEBUG(g_logger) << "Fiber::Fiber main";
 }
 
-Fiber::Fiber(std::function<void()> cb, size_t stacksize)
+Fiber::Fiber(std::function<void()> cb, size_t stacksize, bool use_caller)
     :m_id(++s_fiber_id)
     ,m_cb(cb) {
     ++s_fiber_count;
@@ -68,15 +68,12 @@ Fiber::Fiber(std::function<void()> cb, size_t stacksize)
     m_ctx.uc_stack.ss_sp = m_stack;
     m_ctx.uc_stack.ss_size = m_stacksize;
 
-    makecontext(&m_ctx, &Fiber::MainFunc, 0);
+    if(!use_caller){
+        makecontext(&m_ctx, &Fiber::MainFunc, 0);
+    } else {
+        makecontext(&m_ctx, &Fiber::CallerMainFunc, 0);
+    }
 
-    /*
-     if(!use_caller) {
-         makecontext(&m_ctx, &Fiber::MainFunc, 0);
-     } else {
-         makecontext(&m_ctx, &Fiber::CallerMainFunc, 0);
-     }
-     */
 
     DHT_LOG_DEBUG(g_logger) << "Fiber::Fiber id=" << m_id;
 }
@@ -119,20 +116,19 @@ void Fiber::reset(std::function<void()> cb) {
 void Fiber::call() {
     SetThis(this);
     m_state = EXEC;
+    DHT_LOG_INFO(g_logger) << getId();
     if(swapcontext(&t_threadFiber->m_ctx, &m_ctx)) {
         DHT_ASSERT2(false, "swapcontext");
     }
 }
 
-
-/*
 void Fiber::back() {
     SetThis(t_threadFiber.get());
     if(swapcontext(&m_ctx, &t_threadFiber->m_ctx)) {
         DHT_ASSERT2(false, "swapcontext");
     }
 }
-*/
+
 
 void Fiber::swapIn() {
     SetThis(this);
@@ -145,11 +141,11 @@ void Fiber::swapIn() {
 
 void Fiber::swapOut() {
     SetThis(Scheduler::GetMainFiber());
-
-    if(swapcontext(&m_ctx, &Scheduler::GetMainFiber()->m_ctx)){
+    if(swapcontext(&m_ctx, &Scheduler::GetMainFiber()->m_ctx)) {
         DHT_ASSERT2(false, "swapcontext");
     }
 }
+
 
 void Fiber::SetThis(Fiber *f) {
     t_fiber = f;
@@ -209,10 +205,10 @@ void Fiber::MainFunc() {
     cur.reset();
     raw_ptr->swapOut();
 
-    DHT_ASSERT2(false, "never reach fiber_id=" + std::to_string(raw_ptr->getId()));
+    DHT_ASSERT2(false, "MainFunc: never reach fiber_id=" + std::to_string(raw_ptr->getId()));
 }
 
-/*
+
 void Fiber::CallerMainFunc() {
     Fiber::ptr cur = GetThis();
     DHT_ASSERT(cur);
@@ -237,8 +233,7 @@ void Fiber::CallerMainFunc() {
     auto raw_ptr = cur.get();
     cur.reset();
     raw_ptr->back();
-    DHT_ASSERT2(false, "never reach fiber_id=" + std::to_string(raw_ptr->getId()));
+    DHT_ASSERT2(false, "CallerMainFunc: never reach fiber_id=" + std::to_string(raw_ptr->getId()));
 }
- */
 
 }

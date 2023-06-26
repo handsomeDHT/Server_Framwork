@@ -24,7 +24,7 @@ Scheduler::Scheduler(size_t threads, bool use_caller, const std::string &name)
         DHT_ASSERT(GetThis() == nullptr);
         t_scheduler = this;
 
-        m_rootFiber.reset(new Fiber(std::bind(&Scheduler::run, this)));
+        m_rootFiber.reset(new Fiber(std::bind(&Scheduler::run, this) ,0, true));
         dht::Thread::SetName(m_name);
 
         t_fiber = m_rootFiber.get();
@@ -87,10 +87,9 @@ void Scheduler::stop() {
             return;
         }
     }
-    //bool exit_on_this_fiber = false;
+
     if(m_rootThread != -1){
         DHT_ASSERT(GetThis() == this);
-        //if(Fiber::GetThis() == )
     }else{
         DHT_ASSERT(GetThis() != this);
     }
@@ -144,6 +143,7 @@ void Scheduler::run() {
                 //以上两种状态都不满足，则把该任务赋值给ft,并从任务队列中将他抹除
                 ft = *it;
                 m_fibers.erase(it);
+                break;
             }
         }
         //如果存在其他线程的任务，通知一下
@@ -197,7 +197,7 @@ void Scheduler::run() {
             idle_fiber->swapIn();
             --m_idleThreadCount;
             if(idle_fiber->getState() != Fiber::TERM
-                        || idle_fiber->getState() != Fiber::EXCEPT){
+                        && idle_fiber->getState() != Fiber::EXCEPT){
                 idle_fiber->m_state = Fiber::HOLD;
             }
 
@@ -208,7 +208,7 @@ void Scheduler::run() {
 bool Scheduler::stopping() {
     MutexType::Lock lock(m_mutex);
     return m_autoStop && m_stopping
-            && m_fibers.empty() && m_activeThreadCount == 0;
+           && m_fibers.empty() && m_activeThreadCount == 0;
 }
 
 void Scheduler::setThis() {
