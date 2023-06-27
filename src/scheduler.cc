@@ -67,11 +67,13 @@ void Scheduler::start() {
     }
     lock.unlock();
 
+    /*
     if(m_rootFiber){
         //m_rootFiber->swapIn();
         m_rootFiber->call();
-        DHT_LOG_INFO(g_logger) << "call out";
+        DHT_LOG_INFO(g_logger) << "call out" << m_rootFiber->getState();
     }
+     */
 }
 
 void Scheduler::stop() {
@@ -103,8 +105,30 @@ void Scheduler::stop() {
         tickle();
     }
 
-    if(stopping()){
-        return;
+    if(m_rootFiber){
+        /*
+        while(!stopping()){
+            if(m_rootFiber->getState() == Fiber::TERM
+                    || m_rootFiber->getState() == Fiber::EXCEPT){
+                m_rootFiber.reset(new Fiber(std::bind(&Scheduler::run, this) ,0, true));
+                DHT_LOG_INFO(g_logger) << "root fiber is term, reset" ;
+                t_fiber = m_rootFiber.get();
+            }
+            m_rootFiber->call();
+        }
+         */
+        if(!stopping()) {
+            m_rootFiber->call();
+        }
+    }
+    std::vector<Thread::ptr> thrs;
+    {
+        MutexType::Lock lock(m_mutex);
+        thrs.swap(m_threads);
+    }
+
+    for(auto& i : thrs){
+        i->join();
     }
 }
 
@@ -123,6 +147,7 @@ void Scheduler::run() {
     while(true){
         ft.reset();
         bool tickle_me = false;
+        bool is_active = false;
         //从消息队列中取出一个需要执行的消息
         {
             MutexType::Lock lock(m_mutex);
@@ -143,6 +168,8 @@ void Scheduler::run() {
                 //以上两种状态都不满足，则把该任务赋值给ft,并从任务队列中将他抹除
                 ft = *it;
                 m_fibers.erase(it);
+                ++m_activeThreadCount;
+                is_active = true;
                 break;
             }
         }
@@ -155,7 +182,7 @@ void Scheduler::run() {
         //两种任务，一个是fiber,一个是cb
         if(ft.fiber && (ft.fiber->getState() != Fiber::TERM
                     || ft.fiber->getState() != Fiber::EXCEPT) ){
-            ++m_activeThreadCount;
+
             ft.fiber->swapIn();
             --m_activeThreadCount;
 
@@ -173,7 +200,6 @@ void Scheduler::run() {
                 cb_fiber.reset(new Fiber(ft.cb));
                 ft.cb = nullptr;
             }
-            ++m_activeThreadCount;
             ft.reset();
             --m_activeThreadCount;
             cb_fiber->swapIn();
@@ -187,7 +213,12 @@ void Scheduler::run() {
                 cb_fiber -> m_state = Fiber::HOLD;
                 cb_fiber.reset();
             }
-        }else {    //两种任务都为空，说明已经执行完了，此时用idle来进行执行
+        }else {
+            if(is_active){
+                --m_activeThreadCount;
+                continue;
+            }
+            //两种任务都为空，说明已经执行完了，此时用idle来进行执行
             if(idle_fiber->getState() == Fiber::TERM) {
                 DHT_LOG_INFO(g_logger) << "idle fiber term";
                 break;
@@ -221,6 +252,9 @@ void Scheduler::tickle() {
 
 void Scheduler::idle() {
     DHT_LOG_INFO(g_logger) << "idle";
+    while(!stopping()){
+        dht::Fiber::YieldToHold();
+    }
 }
 
 

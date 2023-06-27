@@ -11,7 +11,8 @@ void test_fiber() {
 
     sleep(1);
     if(--s_count >= 0) {
-        dht::Scheduler::GetThis()->schedule(&test_fiber, dht::GetThreadId());
+        //dht::Scheduler::GetThis()->schedule(&test_fiber, dht::GetThreadId());
+        dht::Scheduler::GetThis()->schedule(&test_fiber);
     }
 }
 
