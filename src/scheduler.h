@@ -165,19 +165,19 @@ private:
     };
 private:
     MutexType m_mutex;
-    std::vector<Thread::ptr> m_threads;
+    std::vector<Thread::ptr> m_threads; //线程池
     std::list<FiberAndThread> m_fibers;//即将要执行的、计划要执行的协程
     //std::map<int, std::list<FiberAndThread> > m_thrFibers;
     Fiber::ptr m_rootFiber; //主协程
     std::string m_name;
 protected:
     std::vector<int> m_threadIds;
-    size_t m_threadCount = 0;
-    std::atomic<size_t> m_activeThreadCount = {0};
-    std::atomic<size_t> m_idleThreadCount = {0};
-    bool m_stopping = true;
-    bool m_autoStop = false;
-    int m_rootThread = 0;
+    size_t m_threadCount = 0;//线程数量
+    std::atomic<size_t> m_activeThreadCount = {0}; //工作线程数量
+    std::atomic<size_t> m_idleThreadCount = {0}; //空闲线程数量
+    bool m_stopping = true; //是否正在停止
+    bool m_autoStop = false;//是否自动停止
+    int m_rootThread = 0; //主线程id
 };
 }
 

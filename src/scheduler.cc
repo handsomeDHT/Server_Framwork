@@ -33,6 +33,7 @@ Scheduler::Scheduler(size_t threads, bool use_caller, const std::string &name)
     }else {
         m_rootThread = -1;
     }
+    //初始化阶段配置线程数量
     m_threadCount = threads;
 }
 
@@ -61,19 +62,14 @@ void Scheduler::start() {
 
     m_threads.resize(m_threadCount);
     for(size_t i = 0; i < m_threadCount; ++i){
+        //初始化对应数量的线程
         m_threads[i].reset(new Thread(std::bind(&Scheduler::run, this)
                                       , m_name + "_" + std::to_string(i)));
+        //各线程对应ID
         m_threadIds.push_back(m_threads[i]->getId());
     }
     lock.unlock();
 
-    /*
-    if(m_rootFiber){
-        //m_rootFiber->swapIn();
-        m_rootFiber->call();
-        DHT_LOG_INFO(g_logger) << "call out" << m_rootFiber->getState();
-    }
-     */
 }
 
 void Scheduler::stop() {
@@ -102,33 +98,25 @@ void Scheduler::stop() {
     }
 
     if(m_rootFiber){
+        //如果存在协程任务，通知
         tickle();
     }
 
     if(m_rootFiber){
-        /*
-        while(!stopping()){
-            if(m_rootFiber->getState() == Fiber::TERM
-                    || m_rootFiber->getState() == Fiber::EXCEPT){
-                m_rootFiber.reset(new Fiber(std::bind(&Scheduler::run, this) ,0, true));
-                DHT_LOG_INFO(g_logger) << "root fiber is term, reset" ;
-                t_fiber = m_rootFiber.get();
-            }
-            m_rootFiber->call();
-        }
-         */
         if(!stopping()) {
+            //任务执行，将当前任务切换到执行状态
             m_rootFiber->call();
         }
     }
     std::vector<Thread::ptr> thrs;
     {
         MutexType::Lock lock(m_mutex);
+        //将m_threads线程池复制出来
         thrs.swap(m_threads);
     }
 
     for(auto& i : thrs){
-        i->join();
+        i->join();//等待线程执行完成
     }
 }
 

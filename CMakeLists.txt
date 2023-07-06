@@ -20,7 +20,8 @@ set(LIB_SRC
     src/thread.cc
     src/macro.cc
     src/fiber.cc
-    src/scheduler.cc)
+    src/scheduler.cc
+    src/iomanager.cc)
 
 add_library(src SHARED ${LIB_SRC})
 force_redefine_file_macro_for_sources(src) #__FILE__
