@@ -23,13 +23,18 @@ private:
             Fiber::ptr fiber;         //事件协程
             std::function<void()> cb; //事件的回调函数
         };
+
+        EventContext& getContext(Event event);
+        void resetContext(EventContext& ctx);
+        void triggerEvent(Event event);
+
+
+
         EventContext read;//读事件
         EventContext write;//写事件
         int fd = 0;        //事件关联的句柄
-        Event m_events = NONE;//已经注册的事件
+        Event events = NONE;//已经注册的事件
         MutexType mutex;
-
-
     };
 
 public:
@@ -38,7 +43,7 @@ public:
                 ,const std::string& name = "");
     ~IOManager();
 
-    //1 success, 0 retry, -1 error
+    //0 success, -1 error
     int addEvent(int fd, Event event, std::function<void()> cb = nullptr);
     bool delEvent(int fd, Event event);
     bool cancelEvent(int fd, Event event);
