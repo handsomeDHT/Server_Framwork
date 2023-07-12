@@ -53,7 +53,7 @@ IOManager::IOManager(size_t threads, bool use_caller, const std::string &name)
     DHT_ASSERT(m_epfd > 0);
 
     int rt = pipe(m_tickleFds);
-    DHT_ASSERT(rt);
+    DHT_ASSERT(!rt);
 
     epoll_event event;
     memset(&event, 0, sizeof(epoll_event));
@@ -61,10 +61,10 @@ IOManager::IOManager(size_t threads, bool use_caller, const std::string &name)
     event.data.fd = m_tickleFds[0];
 
     rt = fcntl(m_tickleFds[0], F_SETFL, O_NONBLOCK);
-    DHT_ASSERT(rt);
+    DHT_ASSERT(!rt);
 
     rt = epoll_ctl(m_epfd, EPOLL_CTL_ADD, m_tickleFds[0], &event);
-    DHT_ASSERT(rt);
+    DHT_ASSERT(!rt);
 
     contextResize(32);
 
@@ -98,13 +98,13 @@ void IOManager::contextResize(size_t size) {
 int IOManager::addEvent(int fd, Event event, std::function<void()> cb) {
     FdContext* fd_ctx = nullptr;
     RWMUtexType::ReadLock lock(m_mutex);
-    if(m_fdContexts.size() > fd){
+    if((int)m_fdContexts.size() > fd){
         fd_ctx = m_fdContexts[fd];
         lock.unlock();
     }else{
         lock.unlock();
         RWMUtexType::WriteLock lock2(m_mutex);
-        contextResize(m_fdContexts.size() * 1.5);
+        contextResize(fd * 1.5);
         fd_ctx = m_fdContexts[fd];
     }
 
@@ -134,21 +134,22 @@ int IOManager::addEvent(int fd, Event event, std::function<void()> cb) {
     fd_ctx->events = (Event)(fd_ctx->events | event);
     FdContext::EventContext& event_ctx = fd_ctx->getContext(event);
     DHT_ASSERT(!event_ctx.scheduler
-                    && event_ctx.fiber
-                    && event_ctx.cb);
+                    && !event_ctx.fiber
+                    && !event_ctx.cb);
     event_ctx.scheduler = Scheduler::GetThis();
     if(cb){
         event_ctx.cb.swap(cb);
     } else {
         event_ctx.fiber = Fiber::GetThis();
-        DHT_ASSERT(event_ctx.fiber->getState() == Fiber::EXEC);
+        DHT_ASSERT2(event_ctx.fiber->getState() == Fiber::EXEC
+            ,"state=" << event_ctx.fiber->getState());
     }
     return 0;
 }
 
 bool IOManager::delEvent(int fd, Event event) {
     RWMUtexType::ReadLock lock(m_mutex);
-    if(m_fdContexts.size() <= fd) {
+    if((int)m_fdContexts.size() <= fd) {
         return false;
     }
     FdContext* fd_ctx = m_fdContexts[fd];
@@ -182,7 +183,7 @@ bool IOManager::delEvent(int fd, Event event) {
 
 bool IOManager::cancelEvent(int fd, Event event) {
     RWMUtexType::ReadLock lock(m_mutex);
-    if(m_fdContexts.size() <= fd) {
+    if((int)m_fdContexts.size() <= fd) {
         return false;
     }
     FdContext* fd_ctx = m_fdContexts[fd];
@@ -206,7 +207,7 @@ bool IOManager::cancelEvent(int fd, Event event) {
                                 << strerror(errno) << ")";
         return false;
     }
-    FdContext::EventContext& event_ctx = fd_ctx->getContext(event);
+    //FdContext::EventContext& event_ctx = fd_ctx->getContext(event);
     fd_ctx->triggerEvent(event);
     --m_pendingEventCount;
     return true;
@@ -214,7 +215,7 @@ bool IOManager::cancelEvent(int fd, Event event) {
 
 bool IOManager::cancelAll(int fd) {
     RWMUtexType::ReadLock lock(m_mutex);
-    if(m_fdContexts.size() <= fd) {
+    if((int)m_fdContexts.size() <= fd) {
         return false;
     }
     FdContext* fd_ctx = m_fdContexts[fd];

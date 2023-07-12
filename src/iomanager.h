@@ -22,7 +22,7 @@ public:
         //读事件(EPOLLIN)
         READ = 0x1,
         //写事件(EPOLLOUT)
-        WRITE = 0x2
+        WRITE = 0x4
     };
 private:
     //Socket事件上线文类

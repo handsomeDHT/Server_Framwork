@@ -209,6 +209,7 @@ void Scheduler::run() {
             //两种任务都为空，说明已经执行完了，此时用idle来进行执行
             if(idle_fiber->getState() == Fiber::TERM) {
                 DHT_LOG_INFO(g_logger) << "idle fiber term";
+                //tickle();
                 break;
             }
 

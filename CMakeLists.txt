@@ -64,6 +64,11 @@ add_dependencies(test_scheduler src)
 force_redefine_file_macro_for_sources(test_scheduler) #__FILE__
 target_link_libraries(test_scheduler ${LIB_LIB})
 
+add_executable(test_iomanager tests/test_iomanager.cc)
+add_dependencies(test_iomanager src)
+force_redefine_file_macro_for_sources(test_iomanager) #__FILE__
+target_link_libraries(test_iomanager ${LIB_LIB})
+
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 
