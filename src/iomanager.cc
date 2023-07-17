@@ -1,7 +1,3 @@
-//
-// Created by 帅帅的涛 on 2023/7/6.
-//
-
 #include "iomanager.h"
 #include "macro.h"
 #include "log.h"
@@ -308,9 +304,16 @@ void IOManager::tickle() {
     DHT_ASSERT(rt == 1);
 }
 
+bool IOManager::stopping(uint64_t &timeout) {
+    timeout = getNextTimer();
+    return timeout == ~0ull
+            && m_pendingEventCount == 0
+            && Scheduler::stopping();
+}
+
 bool IOManager::stopping() {
-    return Scheduler::stopping()
-            && m_pendingEventCount == 0;
+    uint64_t timeout = 0;
+    return stopping(timeout);
 }
 
 void IOManager::idle() {
@@ -321,22 +324,30 @@ void IOManager::idle() {
     });
 
     while(true){
-        if(stopping()){
-            DHT_LOG_INFO(g_logger) << "name=" << getName() << " idle stopping exit";
-            break;
+        uint64_t next_timeout = getNextTimer();
+        if(stopping(next_timeout)){
+                DHT_LOG_INFO(g_logger) << "name=" << getName()
+                                       << " idle stopping exit";
+                break;
         }
         int rt = 0;
         do {
-            static const int MAX_TIMEOUT = 5000;
+            static const int MAX_TIMEOUT = 3000;
+            if(next_timeout != ~0ull){
+                next_timeout = (int)next_timeout > MAX_TIMEOUT
+                                ? MAX_TIMEOUT : next_timeout;
+            }else {
+                next_timeout = MAX_TIMEOUT;
+            }
             /**
              * 检查已注册的文件描述符上是否有就绪的事件，并在事件就绪时返回
              * @param[m_epfd] epoll对象的文件描述符
              * @param[events] 用于存放事件的数组
-             * @param[maxevents] events数组的大小，即最大可以处理的事件数
+             * @param[next_timeout] events数组的大小，即最大可以处理的事件数
              * @param[timeout] 等待事件的超时时间
              */
 
-            rt = epoll_wait(m_epfd, events,64, MAX_TIMEOUT);
+            rt = epoll_wait(m_epfd, events,64, (int)next_timeout);
 
             if(rt < 0 && errno == EINTR){
                 //如果epoll_wait因信号中断而返回，继续等待
@@ -344,6 +355,17 @@ void IOManager::idle() {
                 break; //等待事件发生后，跳出循环
             }
         } while(true);
+
+        //检查定时器
+        std::vector<std::function<void()>> cbs;
+        listExpiredCb(cbs);
+        if(!cbs.empty()) {
+            //schedule(cbs.begin(), cbs.end());
+            for(auto& i : cbs){
+                schedule(i);
+            }
+            cbs.clear();
+        }
 
         //处理所有已发生的事件
         for(int i = 0; i < rt; ++i){
@@ -406,6 +428,10 @@ void IOManager::idle() {
 
         raw_ptr->swapOut();
     }
+}
+
+void IOManager::onTimerInsertedAtFront() {
+    tickle();
 }
 
 }

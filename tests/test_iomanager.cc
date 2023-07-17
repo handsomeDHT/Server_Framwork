@@ -51,11 +51,23 @@ void test1(){
               << " EPOLLOUT=" << EPOLLOUT << std::endl;
     dht::IOManager iom(2, false);
     iom.schedule(&test_fiber);
+}
 
-
+dht::Timer::ptr s_timer;
+void test_timer(){
+    dht::IOManager iom(2);
+    s_timer = iom.addTimer(1000, [](){
+        static int i = 0;
+        DHT_LOG_INFO(g_logger) << "hello timer i=" << i;
+        if(++i == 3) {
+            //s_timer->reset(2000, true);
+            s_timer->cancel();
+        }
+    }, true);
 }
 
 int main(int argc, char** argv){
-    test1();
+    //test1();
+    test_timer();
     return 0;
 }

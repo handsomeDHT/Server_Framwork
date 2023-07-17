@@ -7,10 +7,11 @@
 #define SERVER_FRAMWORK_IOMANAGER_H
 
 #include "scheduler.h"
+#include "timer.h"
 
 namespace dht{
 
-class IOManager : public Scheduler{
+class IOManager : public Scheduler, public TimerManager{
 public:
     typedef std::shared_ptr<IOManager> ptr;
     typedef RWMutex RWMUtexType;
@@ -78,7 +79,10 @@ public:
 protected:
     void tickle() override;
     bool stopping() override;
+    bool stopping(uint64_t& timeout);
     void idle() override;
+
+    void onTimerInsertedAtFront() override;
 
     /**
      * @brief 重置socket句柄上下文的容器大小
