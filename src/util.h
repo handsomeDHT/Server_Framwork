@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/syscall.h>
+#include <sys/time.h>
 #include <string>
 #include <vector>
 
@@ -29,6 +30,10 @@ void Backtrace(std::vector<std::string>& bt, int size = 64, int skip = 1);
  * @param[in] prefix 栈信息前输出的内容
  */
 std::string BacktraceToString(int size = 64, int skip = 2, const std::string& prefix = "");
+
+//时间ms
+uint64_t GetCurrentMS();
+uint64_t GetCurrentUS();
 
 }
 #endif //SERVER_FRAMWORK_UTIL_H

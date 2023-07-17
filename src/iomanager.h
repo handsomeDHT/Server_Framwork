@@ -67,6 +67,7 @@ public:
      * @return 添加成功返回0,失败返回-1
      */
     int addEvent(int fd, Event event, std::function<void()> cb = nullptr);
+
     bool delEvent(int fd, Event event);
 
     bool cancelEvent(int fd, Event event);
@@ -79,11 +80,22 @@ protected:
     bool stopping() override;
     void idle() override;
 
+    /**
+     * @brief 重置socket句柄上下文的容器大小
+     * @param[in] size 容量大小
+     */
     void contextResize(size_t size);
 private:
     //epoll 文件句柄
     int m_epfd = 0;
     // pipe文件句柄
+    /**
+     * pipe管道是一种特殊的文件句柄，用来操作系统访问文件
+     * 管道链接两个文件，分别用于读取端和写入端
+     * 管道是一个<半双工>通信机制
+     * @param m_tickleFds[0]是读取端
+     * @param m_tickleFds[1]是写入端
+     */
     int m_tickleFds[2];
     //当前等待执行的事件数量
     std::atomic<size_t> m_pendingEventCount = {0};
