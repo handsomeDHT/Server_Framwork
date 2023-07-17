@@ -87,8 +87,6 @@ protected:
     virtual void idle(); //什么都不做的时候，执行idle(没任务的情况下)
 
     void setThis();
-
-    bool hasIdleThreads() { return m_idleThreadCount > 0; };
 private:
     /**
      * @brief 协程调度启动(无锁)
