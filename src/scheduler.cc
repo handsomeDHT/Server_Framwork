@@ -5,6 +5,7 @@
 #include "scheduler.h"
 #include "log.h"
 #include "macro.h"
+#include "hook.h"
 
 
 namespace dht{
@@ -121,6 +122,8 @@ void Scheduler::stop() {
 }
 
 void Scheduler::run() {
+    DHT_LOG_INFO(g_logger) << "run";
+    set_hook_enable(true);
     setThis();
     //如果当前ID不等于主线程的ID,将当前线程重置成自己
     if(dht::GetThreadId() != m_rootThread){

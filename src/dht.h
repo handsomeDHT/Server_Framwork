@@ -13,5 +13,7 @@
 #include "macro.h"
 #include "fiber.h"
 #include "scheduler.h"
+#include "iomanager.h"
+#include "hook.h"
 
 #endif //SERVER_FRAMWORK_DHT_H

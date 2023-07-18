@@ -22,15 +22,17 @@ set(LIB_SRC
     src/fiber.cc
     src/scheduler.cc
     src/iomanager.cc
-    src/timer.cc)
+    src/timer.cc
+    src/hook.cc)
 
 add_library(src SHARED ${LIB_SRC})
 force_redefine_file_macro_for_sources(src) #__FILE__
 
 find_library(PTHREAD pthread)
 find_library(YAMLCPP yaml-cpp)
-set(LIB_LIB
+set(LIBS
         src
+        dl
         pthread
         yaml-cpp
 )
@@ -38,37 +40,42 @@ set(LIB_LIB
 add_executable(test tests/test.cc)
 add_dependencies(test src)
 force_redefine_file_macro_for_sources(test) #__FILE__
-target_link_libraries(test ${LIB_LIB})
+target_link_libraries(test ${LIBS})
 
 add_executable(test_config tests/test_config.cc)
 add_dependencies(test_config src)
 force_redefine_file_macro_for_sources(test_config) #__FILE__
-target_link_libraries(test_config ${LIB_LIB})
+target_link_libraries(test_config ${LIBS})
 
 add_executable(test_thread tests/test_thread.cc)
 add_dependencies(test_thread src)
 force_redefine_file_macro_for_sources(test_thread) #__FILE__
-target_link_libraries(test_thread ${LIB_LIB})
+target_link_libraries(test_thread ${LIBS})
 
 add_executable(test_util tests/test_util.cc)
 add_dependencies(test_util src)
 force_redefine_file_macro_for_sources(test_util) #__FILE__
-target_link_libraries(test_util ${LIB_LIB})
+target_link_libraries(test_util ${LIBS})
 
 add_executable(test_fiber tests/test_fiber.cc)
 add_dependencies(test_fiber src)
 force_redefine_file_macro_for_sources(test_fiber) #__FILE__
-target_link_libraries(test_fiber ${LIB_LIB})
+target_link_libraries(test_fiber ${LIBS})
 
 add_executable(test_scheduler tests/test_scheduler.cc)
 add_dependencies(test_scheduler src)
 force_redefine_file_macro_for_sources(test_scheduler) #__FILE__
-target_link_libraries(test_scheduler ${LIB_LIB})
+target_link_libraries(test_scheduler ${LIBS})
 
 add_executable(test_iomanager tests/test_iomanager.cc)
 add_dependencies(test_iomanager src)
 force_redefine_file_macro_for_sources(test_iomanager) #__FILE__
-target_link_libraries(test_iomanager ${LIB_LIB})
+target_link_libraries(test_iomanager ${LIBS})
+
+add_executable(test_hook tests/test_hook.cc)
+add_dependencies(test_hook src)
+force_redefine_file_macro_for_sources(test_hook) #__FILE__
+target_link_libraries(test_hook ${LIBS})
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
