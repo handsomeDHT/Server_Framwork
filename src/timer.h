@@ -51,7 +51,7 @@ public:
 
     Timer::ptr addTimer(uint64_t ms, std::function<void()> cb
                         , bool recurring = false);
-    Timer::ptr addConditionTime(uint64_t ms, std::function<void()> cb
+    Timer::ptr addConditionTimer(uint64_t ms, std::function<void()> cb
                         , std::weak_ptr<void> weak_cond
                         , bool recurring = false);
     uint64_t getNextTimer();

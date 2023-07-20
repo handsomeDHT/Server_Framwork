@@ -94,8 +94,6 @@ extern setsockopt_fun setsockopt_f;
 
 extern int connect_with_timeout(int fd, const struct sockaddr* addr, socklen_t addrlen, uint64_t timeout_ms);
 
-
-
 }
 
 
