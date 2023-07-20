@@ -8,6 +8,7 @@
 #include <vector>
 #include "thread.h"
 #include "iomanager.h"
+#include "singleton.h"
 
 namespace dht{
 /**
@@ -67,5 +68,8 @@ private:
     RWMutexType m_mutex;
     std::vector<FdCtx::ptr> m_datas;
 };
+
+typedef Singleton<FdManager> FdMgr;
+
 }
 #endif //SERVER_FRAMWORK_FD_MANAGER_H
