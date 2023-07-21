@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include "sys/epoll.h"
 
 namespace dht{
 
@@ -83,7 +84,9 @@ uint64_t FdCtx::getTimeout(int type) {
 
 FdManager::FdManager() {
     m_datas.resize(64);
+
 }
+
 
 FdCtx::ptr FdManager::get(int fd, bool auto_create) {
     if(fd == -1) {

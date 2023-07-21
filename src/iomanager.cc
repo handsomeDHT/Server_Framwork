@@ -53,7 +53,9 @@ IOManager::IOManager(size_t threads, bool use_caller, const std::string &name)
      * @return 返回一个整数值，调用成功->返回一个>=0的数
      *                      调用失败->返回-1
      */
+
     m_epfd = epoll_create(5000);
+
     DHT_ASSERT(m_epfd > 0);
 
     int rt = pipe(m_tickleFds);

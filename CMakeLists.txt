@@ -24,7 +24,8 @@ set(LIB_SRC
     src/iomanager.cc
     src/timer.cc
     src/hook.cc
-    src/fd_manager.cc)
+    src/fd_manager.cc
+    )
 
 add_library(src SHARED ${LIB_SRC})
 force_redefine_file_macro_for_sources(src) #__FILE__
