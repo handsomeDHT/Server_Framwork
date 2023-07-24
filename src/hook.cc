@@ -13,6 +13,8 @@
 dht::Logger::ptr g_logger = DHT_LOG_NAME("system");
 namespace dht {
 
+static dht::ConfigVar<int>::ptr g_tcp_connect_timeout
+            = dht::Config::Lookup("tcp.connect.timeout", 5000, "tcp connect timeout");
 static thread_local bool t_hook_enable = false;
 
 #define HOOK_FUN(XX) \
@@ -48,14 +50,23 @@ void hook_init() {
 #undef XX
 }
 
+static uint64_t s_connect_timeout = -1;
+
 //因为在执行main函数前，会先将所有全局变量的定义进行执行
 //所以可以利用这个特性，定义一些在main函数之前就会执行的方法
 struct _HookIniter {
     _HookIniter() {
         hook_init();
+        s_connect_timeout = g_tcp_connect_timeout->getValue();
+
+        g_tcp_connect_timeout->addListener([](const int& old_value, const int& new_value){
+            DHT_LOG_INFO(g_logger) << "tcp connect timeout changed from "
+                                     << old_value << " to " << new_value;
+            s_connect_timeout = new_value;
+        });
     }
 };
-static uint64_t s_connect_timeout = -1;
+
 static _HookIniter s_hook_initer;
 
 bool is_hook_enable() {
@@ -71,39 +82,52 @@ struct timer_info{
     int cancelled = 0;
 };
 
+//该函数主要用于在进行 I/O 操作前，根据不同情况对套接字进行一些预处理，
+//如判断套接字是否可用、是否需要设置超时等，并且提供了对非阻塞 I/O 和超时 I/O 的支持。
 template<typename OriginFun, typename... Args>
 static ssize_t do_io(int fd, OriginFun fun, const char* hook_fun_name
         , uint32_t event, int timeout_so, Args&&... args){
-    if(dht::t_hook_enable){
+    if(!dht::t_hook_enable){
         return fun(fd, std::forward<Args>(args)...);
     }
 
+    DHT_LOG_DEBUG(g_logger) << "do_io" << hook_fun_name << ">";
+
+    // 获取与给定套接字 fd 相关联的 FdCtx（文件描述符上下文）
     dht::FdCtx::ptr ctx = dht::FdMgr::GetInstance()->get(fd);
     if(!ctx){
         return fun(fd, std::forward<Args>(args)...);
     }
+    // 如果该套接字已经关闭，则返回 EBADF 错误
     if(ctx->isClose()){
         errno = EBADF;
         return -1;
     }
+    // 如果不是套接字类型，或者用户设置了非阻塞模式，则直接调用原始函数 fun 并返回结果
     if(!ctx->isSocket() || ctx->getUserNonblock()) {
         return fun(fd, std::forward<Args>(args)...);
-
     }
-
+    // 获取超时时间
     uint64_t to = ctx->getTimeout(timeout_so);
+    // 创建一个 timer_info 结构的智能指针 tinfo
     std::shared_ptr<timer_info> tinfo(new timer_info);
 
 retry:
+    // 调用原始函数 fun 进行 I/O 操作
     ssize_t n = fun(fd, std::forward<Args>(args)...);
+    // 处理因信号中断而返回 -1 的情况，继续调用 fun 进行重试
     while (n == -1 && errno == EINTR) {
         n = fun(fd, std::forward<Args>(args)...);
     }
+    // 如果操作返回 -1，并且错误码为 EAGAIN（资源暂时不可用，通常表示非阻塞 I/O 中无数据可读/写）
     if(n == -1 && errno == EAGAIN) {
+        // 获取 IOManager 的实例指针
         dht::IOManager* iom = dht::IOManager::GetThis();
+        // 创建一个 Timer 实例，用于超时计时
         dht::Timer::ptr timer;
+        // 创建一个指向 tinfo 的弱引用，用于后续回调中判断 tinfo 是否被取消
         std::weak_ptr<timer_info> winfo(tinfo);
-
+        // 如果设置了超时时间，则创建定时器
         if(to != (uint64_t)-1){
             timer = iom->addConditionTimer(to, [winfo, fd, iom, event](){
                 auto t = winfo.lock();
@@ -116,6 +140,7 @@ retry:
         }
         //int c = 0;
         //uint64_t now = 0;
+        // 将套接字添加到 IOManager 中，等待事件发生
         int rt = iom->addEvent(fd, (dht::IOManager::Event)(event));
         if(rt){
                 DHT_LOG_ERROR(g_logger) << hook_fun_name << " addEvent("
@@ -125,14 +150,17 @@ retry:
             }
             return -1;
         }else {
+            // 将当前协程切出，让出执行权给其他协程
             dht::Fiber::YieldToHold();
             if(timer) {
                 timer->cancel();
             }
+            // 如果 tinfo 被标记为取消，返回相应的错误码
             if(tinfo->cancelled) {
                 errno = tinfo->cancelled;
                 return -1;
             }
+            // 回到 retry 标签处，继续进行重试操作
             goto retry;
         }
     }
@@ -206,16 +234,17 @@ int connect_with_timeout(int fd, const struct sockaddr* addr, socklen_t addrlen,
     if(!dht::t_hook_enable) {
         return connect_f(fd, addr, addrlen);
     }
+    // 获取给定套接字 fd 的文件描述符(句柄)
     dht::FdCtx::ptr ctx = dht::FdMgr::GetInstance()->get(fd);
     if(!ctx || ctx->isClose()) {
         errno = EBADF;
         return -1;
     }
-
+    // 如果不是套接字类型，或者用户设置了非阻塞模式，则直接调用原始的 connect 函数
     if(!ctx->isSocket()) {
         return connect_f(fd, addr, addrlen);
     }
-
+    // 尝试进行连接操作，如果连接成功返回 0，如果连接失败且错误码不是 EINPROGRESS，则返回相应的错误码
     if(ctx->getUserNonblock()) {
         return connect_f(fd, addr, addrlen);
     }
@@ -229,9 +258,10 @@ int connect_with_timeout(int fd, const struct sockaddr* addr, socklen_t addrlen,
 
     dht::IOManager* iom = dht::IOManager::GetThis();
     dht::Timer::ptr timer;
+    // 创建一个 timer_info 结构的智能指针 tinfo，并创建指向它的弱引用 winfo
     std::shared_ptr<timer_info> tinfo(new timer_info);
     std::weak_ptr<timer_info> winfo(tinfo);
-
+    // 如果设置了超时时间，则创建定时器
     if(timeout_ms != (uint64_t)-1) {
         timer = iom->addConditionTimer(timeout_ms, [winfo, fd, iom]() {
             auto t = winfo.lock();
@@ -242,24 +272,27 @@ int connect_with_timeout(int fd, const struct sockaddr* addr, socklen_t addrlen,
             iom->cancelEvent(fd, dht::IOManager::WRITE);
         }, winfo);
     }
-
+    // 将套接字添加到 IOManager 中，等待事件发生
     int rt = iom->addEvent(fd, dht::IOManager::WRITE);
     if(rt == 0) {
+        // 切出当前协程，让出执行权给其他协程，等待超时或连接成功
         dht::Fiber::YieldToHold();
         if(timer) {
             timer->cancel();
         }
+        // 如果 tinfo 被标记为取消，返回相应的错误码
         if(tinfo->cancelled) {
             errno = tinfo->cancelled;
             return -1;
         }
     } else {
+        // 添加事件失败，取消定时器，返回错误信息
         if(timer) {
             timer->cancel();
         }
         DHT_LOG_ERROR(g_logger) << "connect addEvent(" << fd << ", WRITE) error";
     }
-
+    // 检查连接的结果，获取 SO_ERROR 错误码，如果为 0 表示连接成功，否则表示连接失败
     int error = 0;
     socklen_t len = sizeof(int);
     if(-1 == getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &len)) {

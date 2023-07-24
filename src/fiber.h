@@ -118,10 +118,11 @@ private:
     uint64_t m_id = 0;
     uint32_t m_stacksize = 0;
     State m_state = INIT;
-
+    //携程上下文
     ucontext_t m_ctx;
+    //携程运行栈指针
     void* m_stack = nullptr;
-
+    //携程运行函数
     std::function<void()> m_cb;
 };
 

@@ -1,8 +1,6 @@
 /**
  * 基于Epoll的IO携程调度器
  */
-
-
 #ifndef SERVER_FRAMWORK_IOMANAGER_H
 #define SERVER_FRAMWORK_IOMANAGER_H
 

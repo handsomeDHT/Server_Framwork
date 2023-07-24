@@ -19,15 +19,18 @@ Scheduler::Scheduler(size_t threads, bool use_caller, const std::string &name)
     DHT_ASSERT(threads > 0);
 
     if(use_caller){
+        // 获取当前正在执行的协程对象，并将调用者线程从线程数量中减去
         dht::Fiber::GetThis();
         --threads;
 
         DHT_ASSERT(GetThis() == nullptr);
+        // 将当前调度器设置为全局的线程局部变量 t_scheduler
         t_scheduler = this;
 
+        // 创建根协程对象，将调度器的 run 函数作为根协程的回调函数
         m_rootFiber.reset(new Fiber(std::bind(&Scheduler::run, this) ,0, true));
         dht::Thread::SetName(m_name);
-
+        // 将 t_fiber 设置为根协程，表示当前执行的协程为根协程
         t_fiber = m_rootFiber.get();
         m_rootThread = dht::GetThreadId();
         m_threadIds.push_back(m_rootThread);
@@ -70,11 +73,11 @@ void Scheduler::start() {
         m_threadIds.push_back(m_threads[i]->getId());
     }
     lock.unlock();
-
 }
 
 void Scheduler::stop() {
     m_autoStop = true;
+    // 如果根协程存在，并且线程数量为 0，并且根协程状态为 TERM 或 INIT，表示所有协程任务已经执行完毕
     if(m_rootFiber
             && m_threadCount == 0
             && ((m_rootFiber->getState() == Fiber::TERM)
@@ -86,20 +89,22 @@ void Scheduler::stop() {
             return;
         }
     }
-
+    // 如果根线程 ID 不为 -1，则断言当前正在执行的协程对象为当前调度器
+    // 如果根线程 ID 为 -1，则断言当前正在执行的协程对象不为当前调度器
     if(m_rootThread != -1){
         DHT_ASSERT(GetThis() == this);
     }else{
         DHT_ASSERT(GetThis() != this);
     }
-
+    // 设置停止标志为 true，表示调度器正在停止
     m_stopping = true;
+    // 对线程池中的所有执行线程进行唤醒（tickle），使其从等待状态中恢复运行
     for(size_t i = 0; i < m_threadCount; ++i){
         tickle();
     }
 
+    // 如果根协程存在，则继续进行一次唤醒（tickle）
     if(m_rootFiber){
-        //如果存在协程任务，通知
         tickle();
     }
 
@@ -125,9 +130,8 @@ void Scheduler::run() {
     DHT_LOG_INFO(g_logger) << "run";
     set_hook_enable(true);
     setThis();
-    //如果当前ID不等于主线程的ID,将当前线程重置成自己
+    // 如果当前线程的线程 ID 不等于主线程的线程 ID，将当前线程重置为调度器的线程
     if(dht::GetThreadId() != m_rootThread){
-
         t_fiber = Fiber::GetThis().get();
     }
     //当线程没事做的时候，用Idle
@@ -135,6 +139,7 @@ void Scheduler::run() {
     Fiber::ptr cb_fiber;
 
     FiberAndThread ft;
+    // 循环执行调度器的任务调度和协程切换
     while(true){
         ft.reset();
         bool tickle_me = false;
@@ -174,6 +179,7 @@ void Scheduler::run() {
         if(ft.fiber && (ft.fiber->getState() != Fiber::TERM
                     || ft.fiber->getState() != Fiber::EXCEPT) ){
 
+            //将当前任务设置成EXEC状态
             ft.fiber->swapIn();
             --m_activeThreadCount;
 
@@ -223,7 +229,6 @@ void Scheduler::run() {
                         && idle_fiber->getState() != Fiber::EXCEPT){
                 idle_fiber->m_state = Fiber::HOLD;
             }
-
         }
     }
 }

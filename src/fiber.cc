@@ -44,6 +44,7 @@ uint64_t Fiber::GetFiberId() {
 
 Fiber::Fiber() {
     m_state = EXEC;
+    //t_fieber = this
     SetThis(this);
 
     if(getcontext(&m_ctx)){
@@ -64,16 +65,17 @@ Fiber::Fiber(std::function<void()> cb, size_t stacksize, bool use_caller)
     if(getcontext(&m_ctx)) {
         DHT_ASSERT2(false, "getcontext");
     }
-    m_ctx.uc_link = nullptr;
-    m_ctx.uc_stack.ss_sp = m_stack;
-    m_ctx.uc_stack.ss_size = m_stacksize;
+    m_ctx.uc_link = nullptr;// 协程执行完成后返回到主线程的上下文（这里设为 nullptr 表示不返回）
+    m_ctx.uc_stack.ss_sp = m_stack;// 协程的栈起始地址
+    m_ctx.uc_stack.ss_size = m_stacksize; // 协程的栈大小
 
     if(!use_caller){
+        // Fiber::MainFunc 会调用回调函数 m_cb 来执行协程的实际任务
         makecontext(&m_ctx, &Fiber::MainFunc, 0);
     } else {
+        // Fiber::CallerMainFunc 会在当前调用者栈上执行协程的实际任务
         makecontext(&m_ctx, &Fiber::CallerMainFunc, 0);
     }
-
 
     DHT_LOG_DEBUG(g_logger) << "Fiber::Fiber id=" << m_id;
 }
@@ -181,19 +183,25 @@ uint64_t Fiber::TotalFibers() {
 }
 
 void Fiber::MainFunc() {
+    // 获取当前正在执行的协程对象，即当前正在执行 MainFunc 的协程
     Fiber::ptr cur = GetThis();
     DHT_ASSERT(cur);
     try {
+        // 执行协程的回调函数 m_cb，即协程的实际任务
         cur->m_cb();
+        // 协程的回调函数执行完成后，将回调函数 m_cb 置为空指针，表示协程的任务已经完成
         cur->m_cb = nullptr;
+        // 将协程的状态标记为 TERMINATE（TERM），表示协程执行完成
         cur->m_state = TERM;
     } catch (std::exception& ex) {
+        // 如果协程的回调函数抛出了标准异常，将协程的状态标记为 EXCEPTION（EXCEPT）
         cur->m_state = EXCEPT;
         DHT_LOG_ERROR(g_logger) << "Fiber Except: " << ex.what()
                                   << " fiber_id=" << cur->getId()
                                   << std::endl
                                   << dht::BacktraceToString();
     } catch (...) {
+        // 如果协程的回调函数抛出了其他异常，将协程的状态标记为 EXCEPTION（EXCEPT）
         cur->m_state = EXCEPT;
         DHT_LOG_ERROR(g_logger) << "Fiber Except"
                                   << " fiber_id=" << cur->getId()
@@ -202,9 +210,13 @@ void Fiber::MainFunc() {
     }
 
     auto raw_ptr = cur.get();
+    // 释放当前协程的 shared_ptr 引用计数，并将 cur 指针重置为 nullptr
     cur.reset();
+    // 调用协程对象的 swapOut 函数，将当前协程切换出去，切换到主协程（调用者的协程）
     raw_ptr->swapOut();
 
+    // 当代码执行到这里，表示协程执行完成，但是不应该执行到这里
+    // 所以使用断言 DHT_ASSERT2 来触发错误，输出错误日志，并包含协程的唯一标识符 fiber_id
     DHT_ASSERT2(false, "MainFunc: never reach fiber_id=" + std::to_string(raw_ptr->getId()));
 }
 

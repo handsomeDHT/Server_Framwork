@@ -56,7 +56,6 @@ public:
             MutexType::Lock lock(m_mutex);
             need_tickle = scheduleNoLock(fc, thread);
         }
-
         if(need_tickle){
             tickle();
         }
@@ -173,7 +172,7 @@ private:
     Fiber::ptr m_rootFiber; //主协程
     std::string m_name;
 protected:
-    std::vector<int> m_threadIds;
+    std::vector<int> m_threadIds; /// 协程下的线程id数组
     size_t m_threadCount = 0;//线程数量
     std::atomic<size_t> m_activeThreadCount = {0}; //工作线程数量
     std::atomic<size_t> m_idleThreadCount = {0}; //空闲线程数量

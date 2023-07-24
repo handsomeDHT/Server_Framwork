@@ -266,7 +266,7 @@ private:
     pthread_t m_thread = 0;
     std::function<void()> m_cb;
     std::string m_name;
-
+    //信号量
     Semaphore m_semaphore;
 };
 }
