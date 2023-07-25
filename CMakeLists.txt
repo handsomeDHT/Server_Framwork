@@ -25,6 +25,7 @@ set(LIB_SRC
     src/timer.cc
     src/hook.cc
     src/fd_manager.cc
+    src/address.cc
     )
 
 add_library(src SHARED ${LIB_SRC})
