@@ -78,7 +78,7 @@ uint32_t IPv4Address::getPort() const {
 
 }
 
-void IPv4Address::setPPort(uint32_t v) {
+void IPv4Address::setPort(uint32_t v) {
 
 }
 
@@ -119,7 +119,7 @@ uint32_t IPv6Address::getPort() const {
 
 }
 
-void IPv6Address::setPPort(uint32_t v) {
+void IPv6Address::setPort(uint32_t v) {
 
 }
 
