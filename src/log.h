@@ -16,6 +16,7 @@
 #include <map>
 #include "singleton.h"
 #include "thread.h"
+#include "util.h"
 
 /**
  * @brief 使用流式方式将日志级别level的日志写入到logger
