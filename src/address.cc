@@ -126,9 +126,6 @@ IPAddress::ptr Address::LookupAnyIPAddress(const std::string& host,
                                            int family, int type, int protocol) {
     std::vector<Address::ptr> result;
     if(Lookup(result, host, family, type, protocol)) {
-        //for(auto& i : result) {
-        //    std::cout << i->toString() << std::endl;
-        //}
         for(auto& i : result) {
             IPAddress::ptr v = std::dynamic_pointer_cast<IPAddress>(i);
             if(v) {
@@ -222,7 +219,7 @@ int Address::getFamily() const {
     return getAddr()->sa_family;
 }
 
-std::string Address::toString() {
+std::string Address::toString() const {
     std::stringstream ss;
     insert(ss);
     return ss.str();
@@ -250,9 +247,56 @@ bool Address::operator!=(const Address &rhs) const {
 }
 
 /**
+ * class IPAddress
+ * ---------------------------------------------------------------
+ */
+IPAddress::ptr IPAddress::Create(const char* address, uint16_t port) {
+    addrinfo hints, *results;
+    memset(&hints, 0, sizeof(addrinfo));
+
+    hints.ai_flags = AI_NUMERICHOST;
+    hints.ai_family = AF_UNSPEC;
+
+    int error = getaddrinfo(address, NULL, &hints, &results);
+    if(error) {
+        DHT_LOG_DEBUG(g_logger) << "IPAddress::Create(" << address
+                                  << ", " << port << ") error=" << error
+                                  << " errno=" << errno << " errstr=" << strerror(errno);
+        return nullptr;
+    }
+
+    try {
+        IPAddress::ptr result = std::dynamic_pointer_cast<IPAddress>(
+                Address::Create(results->ai_addr, (socklen_t)results->ai_addrlen));
+        if(result) {
+            result->setPort(port);
+        }
+        freeaddrinfo(results);
+        return result;
+    } catch (...) {
+        freeaddrinfo(results);
+        return nullptr;
+    }
+}
+
+
+/**
  * class IPv4Address
  * ---------------------------------------------------------------
  */
+
+IPv4Address::ptr IPv4Address::Create(const char* address, uint16_t port) {
+    IPv4Address::ptr rt(new IPv4Address);
+    rt->m_addr.sin_port = byteswapOnLittleEndian(port);
+    int result = inet_pton(AF_INET, address, &rt->m_addr.sin_addr);
+    if(result <= 0) {
+        DHT_LOG_DEBUG(g_logger) << "IPv4Address::Create(" << address << ", "
+                                  << port << ") rt=" << result << " errno=" << errno
+                                  << " errstr=" << strerror(errno);
+        return nullptr;
+    }
+    return rt;
+}
 
 IPv4Address::IPv4Address(const sockaddr_in& address) {
     m_addr = address;
@@ -330,6 +374,19 @@ void IPv4Address::setPort(uint32_t v) {
  * class IPv6Address
  * ---------------------------------------------------------------
  */
+
+IPv6Address::ptr IPv6Address::Create(const char* address, uint16_t port) {
+    IPv6Address::ptr rt(new IPv6Address);
+    rt->m_addr.sin6_port = byteswapOnLittleEndian(port);
+    int result = inet_pton(AF_INET6, address, &rt->m_addr.sin6_addr);
+    if(result <= 0) {
+        DHT_LOG_DEBUG(g_logger) << "IPv6Address::Create(" << address << ", "
+                                  << port << ") rt=" << result << " errno=" << errno
+                                  << " errstr=" << strerror(errno);
+        return nullptr;
+    }
+    return rt;
+}
 
 IPv6Address::IPv6Address() {
     memset(&m_addr, 0, sizeof(m_addr));
@@ -467,6 +524,21 @@ socklen_t UnixAddress::getAddrLen() const {
     return m_length;
 }
 
+void UnixAddress::setAddrLen(uint32_t v) {
+    m_length = v;
+}
+
+std::string UnixAddress::getPath() const {
+    std::stringstream ss;
+    if(m_length > offsetof(sockaddr_un, sun_path)
+       && m_addr.sun_path[0] == '\0') {
+        ss << "\\0" << std::string(m_addr.sun_path + 1,
+                                   m_length - offsetof(sockaddr_un, sun_path) - 1);
+    } else {
+        ss << m_addr.sun_path;
+    }
+    return ss.str();
+}
 
 std::ostream &UnixAddress::insert(std::ostream &os) const {
     if(m_length > offsetof(sockaddr_un, sun_path)
