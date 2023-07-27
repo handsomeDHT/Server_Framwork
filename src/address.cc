@@ -53,6 +53,7 @@ Address::ptr Address::Create(const sockaddr* addr, socklen_t addrlen) {
     return result;
 }
 
+
 bool Address::Lookup(std::vector<Address::ptr>& result, const std::string& host,
                      int family, int type, int protocol) {
     addrinfo hints, *results, *next;
