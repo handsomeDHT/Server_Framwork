@@ -80,6 +80,11 @@ add_dependencies(test_hook src)
 force_redefine_file_macro_for_sources(test_hook) #__FILE__
 target_link_libraries(test_hook ${LIBS})
 
+add_executable(test_address tests/test_address.cc)
+add_dependencies(test_address src)
+force_redefine_file_macro_for_sources(test_address) #__FILE__
+target_link_libraries(test_address ${LIBS})
+
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 
