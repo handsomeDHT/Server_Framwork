@@ -26,7 +26,10 @@ set(LIB_SRC
     src/hook.cc
     src/fd_manager.cc
     src/address.cc
-    src/endian.h)
+    src/endian.h
+    src/socket.cc
+    src/noncopyable.h
+    src/mutex.cc)
 
 add_library(src SHARED ${LIB_SRC})
 force_redefine_file_macro_for_sources(src) #__FILE__

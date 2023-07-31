@@ -13,38 +13,6 @@ static thread_local std::string t_thread_name = "UNKNOW";
 //将系统日志统一输出到"system"中去
 static dht::Logger::ptr g_logger = DHT_LOG_NAME("system");
 
-Semaphore::Semaphore(uint32_t count) {
-    /**
-     * sem_init 初始化一个未命名的信号量
-     * @param[sem] 只想要初始化的信号量的指针
-     * @param[pshared] 指定信号量是否可用于进程间共享
-     * @param[value] 指定信号量的初始值
-     */
-    if(sem_init(&m_semaphore, 0, count)){
-        throw std::logic_error("sem_init error");
-    }
-}
-
-Semaphore::~Semaphore() {
-    sem_destroy(&m_semaphore);
-
-}
-
-void Semaphore::wait() {
-        if(sem_wait(&m_semaphore)){
-            throw std::logic_error("sem_wait error");
-        }
-}
-void Semaphore::notify() {
-    /**
-     * 它会对一个已初始化的信号量进行操作，使其值增加，从而允许其他等待该信号量的线程继续执行。
-     */
-    if(sem_post(&m_semaphore)){
-        throw std::logic_error("sem_post error");
-    }
-}
-
-
 Thread *Thread::GetThis() {
     return t_thread;
 }
