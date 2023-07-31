@@ -157,7 +157,7 @@ bool Socket::bind(const Address::ptr addr) {
                                   << ") not equal, addr=" << addr->toString();
         return false;
     }
-
+    /**
     UnixAddress::ptr uaddr = std::dynamic_pointer_cast<UnixAddress>(addr);
     if (uaddr) {
         Socket::ptr sock = Socket::CreateUnixTCPSocket();
@@ -167,6 +167,7 @@ bool Socket::bind(const Address::ptr addr) {
             dht::FSUtil::Unlink(uaddr->getPath(), true);
         }
     }
+     **/
 
     if (::bind(m_sock, addr->getAddr(), addr->getAddrLen())) {
         DHT_LOG_ERROR(g_logger) << "bind error errrno=" << errno

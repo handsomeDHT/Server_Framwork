@@ -304,7 +304,7 @@ IPv4Address::IPv4Address(const sockaddr_in& address) {
     m_addr = address;
 }
 
-IPv4Address::IPv4Address(uint32_t address, uint32_t port) {
+IPv4Address::IPv4Address(uint32_t address, uint16_t port) {
     //将m_addr置空
     memset(&m_addr, 0, sizeof(m_addr));
     m_addr.sin_family = AF_INET;

@@ -155,7 +155,7 @@ public:
      * @param[in] port 端口号
      */
     explicit IPv4Address(const sockaddr_in& address);
-    explicit IPv4Address(uint32_t address = INADDR_ANY, uint32_t port = 0);
+    explicit IPv4Address(uint32_t address = INADDR_ANY, uint16_t port = 0);
 
     const sockaddr* getAddr() const override;
     sockaddr* getAddr() override;
