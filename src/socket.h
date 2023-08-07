@@ -48,45 +48,15 @@ public:
     };
 
     /**
-     * @brief 创建TCP Socket(满足地址类型)
-     * @param[in] address 地址
+     * @brief 创建不同种类套接字
      */
     static Socket::ptr CreateTCP(dht::Address::ptr address);
-
-    /**
-     * @brief 创建UDP Socket(满足地址类型)
-     * @param[in] address 地址
-     */
     static Socket::ptr CreateUDP(dht::Address::ptr address);
-
-    /**
-     * @brief 创建IPv4的TCP Socket
-     */
     static Socket::ptr CreateTCPSocket();
-
-    /**
-     * @brief 创建IPv4的UDP Socket
-     */
     static Socket::ptr CreateUDPSocket();
-
-    /**
-     * @brief 创建IPv6的TCP Socket
-     */
     static Socket::ptr CreateTCPSocket6();
-
-    /**
-     * @brief 创建IPv6的UDP Socket
-     */
     static Socket::ptr CreateUDPSocket6();
-
-    /**
-     * @brief 创建Unix的TCP Socket
-     */
     static Socket::ptr CreateUnixTCPSocket();
-
-    /**
-     * @brief 创建Unix的UDP Socket
-     */
     static Socket::ptr CreateUnixUDPSocket();
 
     /**
@@ -96,10 +66,6 @@ public:
      * @param[in] protocol 协议
      */
     Socket(int family, int type, int protocol = 0);
-
-    /**
-     * @brief 析构函数
-     */
     virtual ~Socket();
 
     /**
@@ -236,7 +202,7 @@ public:
     virtual int sendTo(const iovec* buffers, size_t length, const Address::ptr to, int flags = 0);
 
     /**
-     * @brief 接受数据
+     * @brief 从已连接的套接字接受连续的数据
      * @param[out] buffer 接收数据的内存
      * @param[in] length 接收数据的内存大小
      * @param[in] flags 标志字
@@ -248,7 +214,7 @@ public:
     virtual int recv(void* buffer, size_t length, int flags = 0);
 
     /**
-     * @brief 接受数据
+     * @brief 从已连接的套接字接受分散的数据
      * @param[out] buffers 接收数据的内存(iovec数组)
      * @param[in] length 接收数据的内存大小(iovec数组长度)
      * @param[in] flags 标志字
@@ -260,7 +226,7 @@ public:
     virtual int recv(iovec* buffers, size_t length, int flags = 0);
 
     /**
-     * @brief 接受数据
+     * @brief 从无连接的套接字接收数据并返回发送方的地址
      * @param[out] buffer 接收数据的内存
      * @param[in] length 接收数据的内存大小
      * @param[out] from 发送端地址
@@ -273,7 +239,7 @@ public:
     virtual int recvFrom(void* buffer, size_t length, Address::ptr from, int flags = 0);
 
     /**
-     * @brief 接受数据
+     * @brief 从无连接的套接字接收分散的数据块并返回发送方的地址
      * @param[out] buffers 接收数据的内存(iovec数组)
      * @param[in] length 接收数据的内存大小(iovec数组长度)
      * @param[out] from 发送端地址

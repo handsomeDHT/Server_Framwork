@@ -29,7 +29,8 @@ set(LIB_SRC
     src/endian.h
     src/socket.cc
     src/noncopyable.h
-    src/mutex.cc)
+    src/mutex.cc
+    src/bytearray.cc)
 
 add_library(src SHARED ${LIB_SRC})
 force_redefine_file_macro_for_sources(src) #__FILE__
@@ -92,6 +93,11 @@ add_executable(test_socket tests/test_socket.cc)
 add_dependencies(test_socket src)
 force_redefine_file_macro_for_sources(test_socket) #__FILE__
 target_link_libraries(test_socket ${LIBS})
+
+add_executable(test_bytearray tests/test_bytearray.cc)
+add_dependencies(test_bytearray src)
+force_redefine_file_macro_for_sources(test_bytearray) #__FILE__
+target_link_libraries(test_bytearray ${LIBS})
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)

@@ -14,15 +14,19 @@ namespace dht {
 
 static dht::Logger::ptr g_logger = DHT_LOG_NAME("system");
 
+/**
+ * 创建不同种类的套接字
+ */
 Socket::ptr Socket::CreateTCP(dht::Address::ptr address) {
+    // 创建一个新的Socket::ptr智能指针，使用指定的地址族和套接字类型（TCP）。
     Socket::ptr sock(new Socket(address->getFamily(), TCP, 0));
     return sock;
 }
 
 Socket::ptr Socket::CreateUDP(dht::Address::ptr address) {
     Socket::ptr sock(new Socket(address->getFamily(), UDP, 0));
-    sock->newSock();
-    sock->m_isConnected = true;
+    sock->newSock(); // 创建底层套接字句柄。
+    sock->m_isConnected = true; // 标记套接字为已连接状态。
     return sock;
 }
 
@@ -73,10 +77,13 @@ Socket::~Socket() {
 }
 
 int64_t Socket::getSendTimeout() {
+    // 通过套接字文件描述符获取对应的文件描述符上下文。
     FdCtx::ptr ctx = FdMgr::GetInstance()->get(m_sock);
     if(ctx) {
-        return ctx->getTimeout(SO_SNDTIMEO);
+        // 如果上下文存在，调用其成员函数获取发送超时时间，使用 SO_SNDTIMEO 选项。
+        return ctx->getTimeout(SO_SNDTIMEO);//SendTimeOut
     }
+    // 如果上下文不存在，返回 -1，表示获取失败或未设置发送超时。
     return -1;
 }
 
@@ -121,12 +128,15 @@ bool Socket::setOption(int level, int option, const void* result, socklen_t len)
 
 Socket::ptr Socket::accept() {
     Socket::ptr sock(new Socket(m_family, m_type, m_protocol));
+    // 使用系统调用 ::accept() 接受连接请求，获取新的套接字文件描述符。
+    //::accept是全局作用域下的accept函数
     int newsock = ::accept(m_sock, nullptr, nullptr);
     if(newsock == -1) {
         DHT_LOG_ERROR(g_logger) << "accept(" << m_sock << ") errno="
                                   << errno << " errstr=" << strerror(errno);
         return nullptr;
     }
+    // 初始化新的套接字对象，将其与新的套接字文件描述符绑定。
     if(sock->init(newsock)) {
         return sock;
     }
@@ -175,6 +185,13 @@ bool Socket::bind(const Address::ptr addr) {
     }
      **/
 
+    /**
+     * int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+     * @param[sockfd]需要绑定地址的套接字文件描述符。
+     * @param[addr]指向 struct sockaddr 结构的指针，表示要绑定的地址。
+     * @param[addrlen]结构的大小（字节数）。
+     * @return 成功返回0，不成功返回1
+     */
     if(::bind(m_sock, addr->getAddr(), addr->getAddrLen())) {
         DHT_LOG_ERROR(g_logger) << "bind error errrno=" << errno
                                   << " errstr=" << strerror(errno);
@@ -185,6 +202,7 @@ bool Socket::bind(const Address::ptr addr) {
 }
 
 bool Socket::reconnect(uint64_t timeout_ms) {
+    //远端地址为空，说明没有链接对象
     if(!m_remoteAddress) {
         DHT_LOG_ERROR(g_logger) << "reconnect m_remoteAddress is null";
         return false;
@@ -195,13 +213,14 @@ bool Socket::reconnect(uint64_t timeout_ms) {
 
 bool Socket::connect(const Address::ptr addr, uint64_t timeout_ms) {
     m_remoteAddress = addr;
+    // 如果当前套接字无效，尝试创建一个新套接字
     if(!isValid()) {
         newSock();
         if(DHT_UNLIKELY(!isValid())) {
             return false;
         }
     }
-
+    // 检查要连接的地址的地址族是否与当前套接字的地址族相同
     if(DHT_UNLIKELY(addr->getFamily() != m_family)) {
         DHT_LOG_ERROR(g_logger) << "connect sock.family("
                                   << m_family << ") addr.family(" << addr->getFamily()
@@ -209,6 +228,7 @@ bool Socket::connect(const Address::ptr addr, uint64_t timeout_ms) {
         return false;
     }
 
+    // 根据是否设置了连接超时时间，选择不同的连接方式
     if(timeout_ms == (uint64_t)-1) {
         if(::connect(m_sock, addr->getAddr(), addr->getAddrLen())) {
             DHT_LOG_ERROR(g_logger) << "sock=" << m_sock << " connect(" << addr->toString()
@@ -236,6 +256,14 @@ bool Socket::listen(int backlog) {
         DHT_LOG_ERROR(g_logger) << "listen error sock=-1";
         return false;
     }
+    /**
+     * listen函数用来在服务器套接字上启动监听模式
+     * 一旦套接字处于监听模式，它就可以排队等待客户端连接，然后使用 accept 函数来接受这些连接。
+     * int listen(int sockfd, int backlog);
+     * 1. 将指定的套接字设置为监听模式。这意味着该套接字将开始接受传入的连接请求。
+     * 2. 创建一个等待连接的队列，可以存储一定数量的连接请求。如果队列已满，新的连接请求将被拒绝，直到有空间可用。
+     * 3. 一旦套接字处于监听模式，服务器可以使用 accept 函数从队列中取出连接请求并建立连接。
+     */
     if(::listen(m_sock, backlog)) {
         DHT_LOG_ERROR(g_logger) << "listen error errno=" << errno
                                   << " errstr=" << strerror(errno);
@@ -256,6 +284,7 @@ bool Socket::close() {
     return false;
 }
 
+// 发送连续的数据块到已连接的套接字
 int Socket::send(const void* buffer, size_t length, int flags) {
     if(isConnected()) {
         return ::send(m_sock, buffer, length, flags);
@@ -263,6 +292,13 @@ int Socket::send(const void* buffer, size_t length, int flags) {
     return -1;
 }
 
+// 发送分散的数据块到已连接的套接字
+/**
+ * iovec 是用于描述分散/聚集 I/O（Scatter/Gather I/O）操作的结构体，在许多操作系统中用于优化数据的传输。
+ * 它允许你在单个 I/O 操作中同时传输多个不连续的数据块（缓冲区），从而避免了数据复制的开销。
+ * 在网络编程中，使用 iovec 结构体可以有效地将多个数据块一次性传输到套接字或从套接字接收到多个数据块。
+ * 这对于处理大量分散的数据非常有用，可以提高数据传输的效率。
+ */
 int Socket::send(const iovec* buffers, size_t length, int flags) {
     if(isConnected()) {
         msghdr msg;
@@ -273,7 +309,10 @@ int Socket::send(const iovec* buffers, size_t length, int flags) {
     }
     return -1;
 }
-
+/**
+ * send 适用于已连接的套接字，不需要在每次发送时指定目标地址，适用于 TCP 协议。
+ * sendto 适用于无连接的套接字，需要在每次发送时指定目标地址，适用于 UDP 协议。
+ */
 int Socket::sendTo(const void* buffer, size_t length, const Address::ptr to, int flags) {
     if(isConnected()) {
         return ::sendto(m_sock, buffer, length, flags, to->getAddr(), to->getAddrLen());
@@ -293,7 +332,17 @@ int Socket::sendTo(const iovec* buffers, size_t length, const Address::ptr to, i
     }
     return -1;
 }
-
+/**
+ * ssize_t recv(int sockfd, void *buf, size_t len, int flags);
+ * @param[fd] 套接字文件描述符。
+ * @param[buf] 指向接收数据的缓冲区的指针。
+ * @param[len] 要接收的数据的最大长度（字节数）。
+ * @param[flags] 接收操作的标志位，通常为 0。
+ *
+ * @return 如果成功接收数据，返回接收到的字节数
+ *         如果连接被关闭，recv返回0，表示已经关闭连接
+ *         如果发生错误，返回-1，并使用全局变量errno来表示错误类型
+ */
 int Socket::recv(void* buffer, size_t length, int flags) {
     if(isConnected()) {
         return ::recv(m_sock, buffer, length, flags);
@@ -301,9 +350,21 @@ int Socket::recv(void* buffer, size_t length, int flags) {
     return -1;
 }
 
+/**
+ * struct msghdr{
+ *      void         *msg_name;       // 指向目标/源地址的指针
+        socklen_t     msg_namelen;    // 地址结构的长度
+        struct iovec *msg_iov;        // 指向数据块的数组
+        size_t        msg_iovlen;     // 数据块的数量
+        void         *msg_control;    // 指向控制数据的指针
+        socklen_t     msg_controllen; // 控制数据的长度
+        int           msg_flags;      // 消息标志
+ * }
+ */
 int Socket::recv(iovec* buffers, size_t length, int flags) {
     if(isConnected()) {
         msghdr msg;
+        //初始一块内存空间
         memset(&msg, 0, sizeof(msg));
         msg.msg_iov = (iovec*)buffers;
         msg.msg_iovlen = length;
@@ -354,9 +415,15 @@ Address::ptr Socket::getRemoteAddress() {
             break;
     }
     socklen_t addrlen = result->getAddrLen();
+    /**
+     * 使用 getpeername 函数来获取已连接套接字的对端地址。
+     * 如果失败，返回一个表示未知地址的 UnknownAddress 对象
+     * int getpeername(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+     * @param[sockfd]已连接套接字的文件描述符。
+     * @param[addr] 指向一个用于存储对端地址的 sockaddr 结构体的指针。
+     * @param[addrlen] 指向一个整数的指针，用于存储 addr 结构体的大小。调用之前需要将其设置为 addr 缓冲区的大小，函数调用后会将其更新为实际地址的大小。
+     */
     if(getpeername(m_sock, result->getAddr(), &addrlen)) {
-        //DHT_LOG_ERROR(g_logger) << "getpeername error sock=" << m_sock
-        //    << " errno=" << errno << " errstr=" << strerror(errno);
         return Address::ptr(new UnknownAddress(m_family));
     }
     if(m_family == AF_UNIX) {
@@ -413,7 +480,7 @@ int Socket::getError() {
     }
     return error;
 }
-
+//将给定的信息输出成流
 std::ostream& Socket::dump(std::ostream& os) const {
     os << "[Socket sock=" << m_sock
        << " is_connected=" << m_isConnected
