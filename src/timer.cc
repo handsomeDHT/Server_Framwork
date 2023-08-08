@@ -24,6 +24,7 @@ bool Timer::cancel() {
     TimerManager::RWMutexType::WriteLock lock(m_manager->m_mutex);
     if(m_cb) {
         m_cb = nullptr;
+        //尝试在定时器集合中找到该计时器
         auto it = m_manager->m_timers.find(shared_from_this());
         m_manager->m_timers.erase(it);
         return true;
@@ -31,16 +32,19 @@ bool Timer::cancel() {
     return false;
 }
 
+//尝试刷新计时器的执行时间并更新计时器管理器中的计时器列表。
 bool Timer::refresh() {
     TimerManager::RWMutexType::WriteLock lock(m_manager->m_mutex);
     if(!m_cb) {
         return false;
     }
     auto it = m_manager->m_timers.find(shared_from_this());
+    // 如果在计时器管理器的计时器列表中未找到当前计时器，则刷新失败。
     if(it == m_manager->m_timers.end()) {
         return false;
     }
     m_manager->m_timers.erase(it);
+    // 更新计时器的下一次执行时间为当前时间加上指定的时间间隔（m_ms）。
     m_next = dht::GetCurrentMS() + m_ms;
     m_manager->m_timers.insert(shared_from_this());
     return true;
@@ -59,14 +63,18 @@ bool Timer::reset(uint64_t ms, bool from_now) {
         return false;
     }
     m_manager->m_timers.erase(it);
+    // 计算新的计时器的起始时间。
     uint64_t start = 0;
     if(from_now) {
-        start = dht::GetCurrentMS();
+        start = dht::GetCurrentMS(); // 从当前时间开始计时。
     } else {
-        start = m_next - m_ms;
+        start = m_next - m_ms;// 保持原有下一次执行时间不变。
     }
+
+    // 更新计时器的时间间隔（ms）和下一次执行时间。
     m_ms = ms;
     m_next = start + m_ms;
+    // 将更新后的计时器重新插入到计时器管理器的计时器列表中，确保位置正确。
     m_manager->addTimer(shared_from_this(), lock);
     return true;
 }
@@ -148,7 +156,7 @@ void TimerManager::listExpiredCb(std::vector<std::function<void()>> &cbs) {
         }
     }
     RWMutexType::WriteLock lock(m_mutex);
-
+    //检查服务器的时间是否调后了
     bool rollover = detectClockRollover(now_ms);
     if(!rollover && (*m_timers.begin())->m_next > now_ms){
         return;
@@ -156,10 +164,13 @@ void TimerManager::listExpiredCb(std::vector<std::function<void()>> &cbs) {
 
     Timer::ptr now_timer(new Timer(now_ms));
     auto it = rollover ? m_timers.end() : m_timers.lower_bound(now_timer);
+    // 跳过下一次执行时间与当前时间相等的计时器，因为它们仍在执行中。
     while(it != m_timers.end() && (*it)->m_next == now_ms){
         ++it;
     }
+    // 将超时的计时器添加到已超时数组中。
     expired.insert(expired.begin(), m_timers.begin(), it);
+    // 从计时器列表中移除已超时的计时器。
     m_timers.erase(m_timers.begin(),it);
     cbs.reserve(expired.size());
 

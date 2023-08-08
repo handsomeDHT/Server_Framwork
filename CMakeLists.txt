@@ -30,7 +30,8 @@ set(LIB_SRC
     src/socket.cc
     src/noncopyable.h
     src/mutex.cc
-    src/bytearray.cc)
+    src/bytearray.cc
+    src/http/http.cc)
 
 add_library(src SHARED ${LIB_SRC})
 force_redefine_file_macro_for_sources(src) #__FILE__

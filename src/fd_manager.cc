@@ -84,7 +84,6 @@ uint64_t FdCtx::getTimeout(int type) {
 
 FdManager::FdManager() {
     m_datas.resize(64);
-
 }
 
 

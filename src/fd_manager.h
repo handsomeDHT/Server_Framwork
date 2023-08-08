@@ -28,8 +28,10 @@ public:
     bool isClose() const {return m_isClosed;}
     bool closed();
 
+    //设置/获取 是否用户主动设置的非阻塞
     void setUserNonblock(bool v) { m_userNonblock = v;}
     bool getUserNonblock() const { return m_userNonblock; }
+    //设置/获取 是否系统主动设置的非阻塞
     void setSysNonblock(bool v) { m_sysNonblock = v; }
     bool getSysNonblock() const { return m_sysNonblock; }
     //通过判断类型type，来控制set的时间类型
