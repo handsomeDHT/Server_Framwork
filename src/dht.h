@@ -15,5 +15,13 @@
 #include "scheduler.h"
 #include "iomanager.h"
 #include "hook.h"
+#include "address.h"
+#include "bytearray.h"
+#include "endian.h"
+#include "fd_manager.h"
+#include "socket.h"
+#include "macro.h"
+#include "timer.h"
+#include "http/http.h"
 
 #endif //SERVER_FRAMWORK_DHT_H
