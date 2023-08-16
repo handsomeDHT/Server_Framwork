@@ -124,16 +124,18 @@ static uint32_t EncodeZigzag32(const int32_t& v) {
     }
 }
 
+//用于在无符号整数的编码和解码中处理有符号整数
 static uint64_t EncodeZigzag64(const int64_t& v) {
-    if(v < 0) {
-        return ((uint64_t)(-v)) * 2 - 1;
+    if(v < 0) { // 如果输入的有符号整数小于 0
+        return ((uint64_t)(-v)) * 2 - 1; // 使用负值映射到奇数范围
     } else {
-        return v * 2;
+        return v * 2; // 使用正值映射到偶数范围
     }
 }
 
+// 函数：将 Zigzag 格式的 32 位无符号整数解码成有符号的 32 位整数
 static int32_t DecodeZigzag32(const uint32_t& v) {
-    return (v >> 1) ^ -(v & 1);
+    return (v >> 1) ^ -(v & 1);  // 将 Zigzag 格式逆转为有符号整数
 }
 
 static int64_t DecodeZigzag64(const uint64_t& v) {
