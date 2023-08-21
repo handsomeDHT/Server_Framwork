@@ -108,6 +108,11 @@ add_dependencies(test_http src)
 force_redefine_file_macro_for_sources(test_http) #__FILE__
 target_link_libraries(test_http ${LIBS})
 
+add_executable(test_http_parser tests/test_http_parser.cc)
+add_dependencies(test_http_parser src)
+force_redefine_file_macro_for_sources(test_http_parser) #__FILE__
+target_link_libraries(test_http_parser ${LIBS})
+
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 
