@@ -213,14 +213,16 @@ void HttpRequest::initParam() {
     initCookies();
 }
 
+// 初始化查询参数的函数
 void HttpRequest::initQueryParam() {
+    // 检查标志位，如果已经初始化过，直接返回
     if(m_parserParamFlag & 0x1) {
         return;
     }
 
 #define PARSE_PARAM(str, m, flag, trim) \
     size_t pos = 0; \
-    do { \
+    do {                                \
         size_t last = pos; \
         pos = str.find('=', pos); \
         if(pos == std::string::npos) { \

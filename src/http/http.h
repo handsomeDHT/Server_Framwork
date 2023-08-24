@@ -194,6 +194,7 @@ bool checkGetAs(const MapType& m, const std::string& key, T& val, const T& def =
         return false;
     }
     try {
+        //将指定数据转化为T类型
         val = boost::lexical_cast<T>(it->second);
         return true;
     } catch (...) {
