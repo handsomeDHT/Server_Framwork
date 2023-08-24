@@ -34,7 +34,8 @@ set(LIB_SRC
     src/http/http.cc
     src/http/http11_parser.rl.cc
     src/http/httpclient_parser.rl.cc
-    src/http/http_parser.cc)
+    src/http/http_parser.cc
+    src/tcp_server.cc)
 
 add_library(src SHARED ${LIB_SRC})
 force_redefine_file_macro_for_sources(src) #__FILE__
