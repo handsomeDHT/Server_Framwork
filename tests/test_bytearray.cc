@@ -6,6 +6,8 @@
 #include "src/dht.h"
 
 static dht::Logger::ptr g_logger = DHT_LOG_ROOT();
+
+
 void test() {
 #define XX(type, len, write_fun, read_fun, base_len) {\
     std::vector<type> vec; \

@@ -354,29 +354,39 @@ void ByteArray::write(const void* buf, size_t size) {
     if(size == 0) {
         return;
     }
-    addCapacity(size);
+    addCapacity(size);// 确保字节数组有足够的容量来存储数据。
 
-    size_t npos = m_position % m_baseSize;
-    size_t ncap = m_cur->size - npos;
-    size_t bpos = 0;
+    size_t npos = m_position % m_baseSize; // 计算当前缓冲区内的位置。
+    size_t ncap = m_cur->size - npos; // 计算当前缓冲区剩余的容量。
+    size_t bpos = 0; // 初始化输入缓冲区内的位置。
 
+    // 循环直到所有数据被写入。
     while(size > 0) {
-        if(ncap >= size) {
+        if(ncap >= size) { // 如果当前缓冲区剩余容量足够存放数据。
+            // 将大小为'size'的数据从输入缓冲区复制到当前缓冲区。
+            /**
+             * void* memcpy(void* destination, const void* source, size_t num);
+             * @param[destination] 指向目标内存区域的指针，表示拷贝的数据将被写入到这个区域。
+             * @param[source] 指向源内存区域的指针，表示拷贝的数据将从这个区域读取。
+             * @param[num] 表示要拷贝的字节数，即数据的大小。
+             */
             memcpy(m_cur->ptr + npos, (const char*)buf + bpos, size);
+            // 如果当前缓冲区被完全使用。
             if(m_cur->size == (npos + size)) {
+                // 切换到下一个缓冲区。
                 m_cur = m_cur->next;
             }
-            m_position += size;
-            bpos += size;
-            size = 0;
-        } else {
+            m_position += size; // 更新字节数组中的当前位置。
+            bpos += size; // 将输入缓冲区内的位置前移'size'。
+            size = 0; // 所有数据已被写入
+        } else { // 如果当前缓冲区剩余容量不足以存放数据。
             memcpy(m_cur->ptr + npos, (const char*)buf + bpos, ncap);
-            m_position += ncap;
-            bpos += ncap;
-            size -= ncap;
-            m_cur = m_cur->next;
-            ncap = m_cur->size;
-            npos = 0;
+            m_position += ncap; // 更新字节数组中的当前位置。
+            bpos += ncap; // 将输入缓冲区内的位置前移'ncap'。
+            size -= ncap; // 将剩余数据大小减去'ncap'。
+            m_cur = m_cur->next; // 切换到下一个缓冲区。
+            ncap = m_cur->size; // 使用新缓冲区的大小更新剩余容量。
+            npos = 0; // 在新缓冲区内重置位置。
         }
     }
 
@@ -386,34 +396,38 @@ void ByteArray::write(const void* buf, size_t size) {
 }
 
 void ByteArray::read(void* buf, size_t size) {
+    // getReadSize -> 可读取数据大小
     if(size > getReadSize()) {
+        // 如果请求读取的数据大小超过了可读取的数据大小，则抛出越界异常。
         throw std::out_of_range("not enough len");
     }
 
-    size_t npos = m_position % m_baseSize;
-    size_t ncap = m_cur->size - npos;
-    size_t bpos = 0;
-    while(size > 0) {
-        if(ncap >= size) {
+    size_t npos = m_position % m_baseSize; // 计算当前缓冲区内的位置。
+    size_t ncap = m_cur->size - npos; // 计算当前缓冲区内剩余的数据大小。
+    size_t bpos = 0; // 初始化目标缓冲区内的位置。
+
+    while(size > 0) { // 循环直到读取完所有请求的数据。
+        if(ncap >= size) { // 如果当前缓冲区内剩余的数据足够满足读取请求。
             memcpy((char*)buf + bpos, m_cur->ptr + npos, size);
-            if(m_cur->size == (npos + size)) {
-                m_cur = m_cur->next;
+            if(m_cur->size == (npos + size)) { // 如果当前缓冲区内的数据刚好被读取完。
+                m_cur = m_cur->next; // 切换到下一个缓冲区。
             }
-            m_position += size;
-            bpos += size;
-            size = 0;
+            m_position += size; // 更新字节数组中的当前位置。
+            bpos += size; // 移动目标缓冲区内的位置。
+            size = 0; // 所有请求的数据已被读取。
         } else {
             memcpy((char*)buf + bpos, m_cur->ptr + npos, ncap);
-            m_position += ncap;
-            bpos += ncap;
-            size -= ncap;
-            m_cur = m_cur->next;
-            ncap = m_cur->size;
-            npos = 0;
+            m_position += ncap; // 更新字节数组中的当前位置。
+            bpos += ncap; // 移动目标缓冲区内的位置。
+            size -= ncap; // 减少待读取数据的大小。
+            m_cur = m_cur->next; // 切换到下一个缓冲区。
+            ncap = m_cur->size; // 更新剩余缓冲区内数据的大小。
+            npos = 0; // 在新缓冲区内重置位置。
         }
     }
 }
 
+//读取指定内存块位置的数据
 void ByteArray::read(void* buf, size_t size, size_t position) const {
     if(size > (m_size - position)) {
         throw std::out_of_range("not enough len");
@@ -464,6 +478,7 @@ void ByteArray::setPosition(size_t v) {
 
 bool ByteArray::writeToFile(const std::string& name) const {
     std::ofstream ofs;
+    // 以二进制模式打开文件，并清空文件内容。
     ofs.open(name, std::ios::trunc | std::ios::binary);
     if(!ofs) {
         DHT_LOG_ERROR(g_logger) << "writeToFile name=" << name
@@ -471,12 +486,13 @@ bool ByteArray::writeToFile(const std::string& name) const {
         return false;
     }
 
-    int64_t read_size = getReadSize();
-    int64_t pos = m_position;
-    Node* cur = m_cur;
+    int64_t read_size = getReadSize(); //获取可读取数据的大小
+    int64_t pos = m_position; //记录当前位置
+    Node* cur = m_cur; //记录当前的缓冲区节点
 
     while(read_size > 0) {
-        int diff = pos % m_baseSize;
+        int diff = pos % m_baseSize; //计算当前缓冲区的偏移量
+        //计算当前缓冲区内，需要写入的数据量
         int64_t len = (read_size > (int64_t)m_baseSize ? m_baseSize : read_size) - diff;
         ofs.write(cur->ptr + diff, len);
         cur = cur->next;
@@ -496,6 +512,11 @@ bool ByteArray::readFromFile(const std::string& name) {
         return false;
     }
 
+    /**
+     * @brief 分配地址
+     * @param[new char[m_baseSize]] new一个大小为m_baseSize的内存空间
+     * @param[[](char* ptr) { delete[] ptr;}]  匿名lambda函数，在shared_ptr的析构函数中进行执行
+     */
     std::shared_ptr<char> buff(new char[m_baseSize], [](char* ptr) { delete[] ptr;});
     while(!ifs.eof()) {
         ifs.read(buff.get(), m_baseSize);
@@ -504,6 +525,7 @@ bool ByteArray::readFromFile(const std::string& name) {
     return true;
 }
 
+//链表结构扩容
 void ByteArray::addCapacity(size_t size) {
     if(size == 0) {
         return;
@@ -514,6 +536,7 @@ void ByteArray::addCapacity(size_t size) {
     }
 
     size = size - old_cap;
+    //ceil 向上取整，计算需要扩容几个节点
     size_t count = ceil(1.0 * size / m_baseSize);
     Node* tmp = m_root;
     while(tmp->next) {

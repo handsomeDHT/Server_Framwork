@@ -102,6 +102,7 @@ public:
      */
     void read(void* buf, size_t size, size_t position) const;
     size_t getPosition() const { return m_position;}
+    //设置ByteArray当前位置
     void setPosition(size_t v);
     bool writeToFile(const std::string& name) const;
     bool readFromFile(const std::string& name);
