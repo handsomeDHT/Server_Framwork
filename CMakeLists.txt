@@ -13,6 +13,13 @@ include_directories(./third_part_apps/include)
 
 link_directories(./third_part_apps/lib64)
 
+option(BUILD_TEST "ON for complile test" OFF)
+
+find_package(OpenSSL REQUIRED)
+if(OPENSSL_FOUND)
+    include_directories(${OPENSSL_INCLUDE_DIR})
+endif()
+
 set(LIB_SRC
     src/log.cc
     src/util.cc
@@ -47,6 +54,7 @@ set(LIBS
         dl
         pthread
         yaml-cpp
+        ${OPENSSL_LIBRARIES}
 )
 
 add_executable(test tests/test.cc)
@@ -113,6 +121,16 @@ add_executable(test_http_parser tests/test_http_parser.cc)
 add_dependencies(test_http_parser src)
 force_redefine_file_macro_for_sources(test_http_parser) #__FILE__
 target_link_libraries(test_http_parser ${LIBS})
+
+add_executable(test_tcp_server tests/test_tcp_server.cc)
+add_dependencies(test_tcp_server src)
+force_redefine_file_macro_for_sources(test_tcp_server) #__FILE__
+target_link_libraries(test_tcp_server ${LIBS})
+
+add_executable(echo_server examples/echo_server.cc)
+add_dependencies(echo_server src)
+force_redefine_file_macro_for_sources(echo_server) #__FILE__
+target_link_libraries(echo_server ${LIBS})
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)

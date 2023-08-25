@@ -1,6 +1,7 @@
 #include "iomanager.h"
 #include "macro.h"
 #include "log.h"
+
 #include <unistd.h>
 #include <sys/epoll.h>
 #include <fcntl.h>
@@ -10,6 +11,53 @@
 namespace dht{
 
 static dht::Logger::ptr g_logger = DHT_LOG_NAME("system");
+
+enum EpollCtlOp {
+};
+
+static std::ostream& operator<< (std::ostream& os, const EpollCtlOp& op) {
+    switch((int)op) {
+#define XX(ctl) \
+        case ctl: \
+            return os << #ctl;
+        XX(EPOLL_CTL_ADD);
+        XX(EPOLL_CTL_MOD);
+        XX(EPOLL_CTL_DEL);
+        default:
+            return os << (int)op;
+    }
+#undef XX
+}
+
+static std::ostream& operator<< (std::ostream& os, EPOLL_EVENTS events) {
+    if(!events) {
+        return os << "0";
+    }
+    bool first = true;
+#define XX(E) \
+    if(events & E) { \
+        if(!first) { \
+            os << "|"; \
+        } \
+        os << #E; \
+        first = false; \
+    }
+    XX(EPOLLIN);
+    XX(EPOLLPRI);
+    XX(EPOLLOUT);
+    XX(EPOLLRDNORM);
+    XX(EPOLLRDBAND);
+    XX(EPOLLWRNORM);
+    XX(EPOLLWRBAND);
+    XX(EPOLLMSG);
+    XX(EPOLLERR);
+    XX(EPOLLHUP);
+    XX(EPOLLRDHUP);
+    XX(EPOLLONESHOT);
+    XX(EPOLLET);
+#undef XX
+    return os;
+}
 
 IOManager::FdContext::EventContext &IOManager::FdContext::getContext(IOManager::Event event) {
     switch(event) {
@@ -128,10 +176,10 @@ int IOManager::addEvent(int fd, Event event, std::function<void()> cb) {
     }
 
     FdContext::MutexType::Lock lock2(fd_ctx->mutex);
-    if(fd_ctx->events & event) {
-        DHT_LOG_ERROR(g_logger) << "addEvent assert fd = " << fd
-                    << " event = " << event
-                    << " fd_ctx.event = " << fd_ctx->events;
+    if(DHT_UNLIKELY(fd_ctx->events & event)) {
+        DHT_LOG_ERROR(g_logger) << "addEvent assert fd=" << fd
+                                << " event=" << (EPOLL_EVENTS)event
+                                << " fd_ctx.event=" << (EPOLL_EVENTS)fd_ctx->events;
         DHT_ASSERT(!(fd_ctx->events & event));
     }
     //EPOLL_CTL_MOD->修改
@@ -147,11 +195,10 @@ int IOManager::addEvent(int fd, Event event, std::function<void()> cb) {
      */
     int rt = epoll_ctl(m_epfd, op, fd, &epevent);
     if(rt){
-        DHT_LOG_ERROR(g_logger) << "epoll_ctl(" << m_epfd << ","
-                                << op << "," << fd << ","
-                                << epevent.events << "):"
-                                << rt << "(" << errno <<")("
-                                << strerror(errno) << ")";
+        DHT_LOG_ERROR(g_logger) << "epoll_ctl(" << m_epfd << ", "
+                                << (EpollCtlOp)op << ", " << fd << ", " << (EPOLL_EVENTS)epevent.events << "):"
+                                << rt << " (" << errno << ") (" << strerror(errno) << ") fd_ctx->events="
+                                << (EPOLL_EVENTS)fd_ctx->events;
         return -1;
     }
 
@@ -183,7 +230,7 @@ bool IOManager::delEvent(int fd, Event event) {
     lock.unlock();
 
     FdContext::MutexType::Lock lock2(fd_ctx->mutex);
-    if(!(fd_ctx->events & event)){
+    if(DHT_UNLIKELY(!(fd_ctx->events & event))){
         return false;
     }
     //更新fd_ctx的events，将指定的event从events中删除
@@ -195,11 +242,9 @@ bool IOManager::delEvent(int fd, Event event) {
     epevent.data.ptr = fd_ctx;
     int rt = epoll_ctl(m_epfd, op, fd, &epevent);
     if(rt) {
-        DHT_LOG_ERROR(g_logger) << "epoll_ctl(" << m_epfd << ","
-                                << op << "," << fd << ","
-                                << epevent.events << "):"
-                                << rt << "(" << errno <<")("
-                                << strerror(errno) << ")";
+        DHT_LOG_ERROR(g_logger) << "epoll_ctl(" << m_epfd << ", "
+                                << (EpollCtlOp)op << ", " << fd << ", " << (EPOLL_EVENTS)epevent.events << "):"
+                                << rt << " (" << errno << ") (" << strerror(errno) << ")";
         return false;
     }
 
@@ -222,7 +267,7 @@ bool IOManager::cancelEvent(int fd, Event event) {
     lock.unlock();
 
     FdContext::MutexType::Lock lock2(fd_ctx->mutex);
-    if(!(fd_ctx->events & event)){
+    if(DHT_UNLIKELY(!(fd_ctx->events & event))){
         return false;
     }
     Event new_events = (Event)(fd_ctx->events & ~event);
@@ -232,11 +277,9 @@ bool IOManager::cancelEvent(int fd, Event event) {
     epevent.data.ptr = fd_ctx;
     int rt = epoll_ctl(m_epfd, op, fd, &epevent);
     if(rt) {
-        DHT_LOG_ERROR(g_logger) << "epoll_ctl(" << m_epfd << ","
-                                << op << "," << fd << ","
-                                << epevent.events << "):"
-                                << rt << "(" << errno <<")("
-                                << strerror(errno) << ")";
+        DHT_LOG_ERROR(g_logger) << "epoll_ctl(" << m_epfd << ", "
+                                  << (EpollCtlOp)op << ", " << fd << ", " << (EPOLL_EVENTS)epevent.events << "):"
+                                  << rt << " (" << errno << ") (" << strerror(errno) << ")";
         return false;
     }
     //FdContext::EventContext& event_ctx = fd_ctx->getContext(event);
@@ -265,11 +308,9 @@ bool IOManager::cancelAll(int fd) {
 
     int rt = epoll_ctl(m_epfd, op, fd, &epevent);
     if(rt) {
-        DHT_LOG_ERROR(g_logger) << "epoll_ctl(" << m_epfd << ","
-                                << op << "," << fd << ","
-                                << epevent.events << "):"
-                                << rt << "(" << errno <<")("
-                                << strerror(errno) << ")";
+        DHT_LOG_ERROR(g_logger) << "epoll_ctl(" << m_epfd << ", "
+                                << (EpollCtlOp)op << ", " << fd << ", " << (EPOLL_EVENTS)epevent.events << "):"
+                                << rt << " (" << errno << ") (" << strerror(errno) << ")";
         return false;
     }
 
@@ -319,75 +360,65 @@ bool IOManager::stopping() {
 }
 
 void IOManager::idle() {
+
+    DHT_LOG_DEBUG(g_logger) << "idle";
+    const uint64_t MAX_EVNETS = 256;
+
     epoll_event* events = new epoll_event[64]();
     //使用智能指针管理events数组的内存释放
     std::shared_ptr<epoll_event> shared_events(events, [](epoll_event* ptr){
         delete[] ptr;
     });
 
-    while(true){
-        uint64_t next_timeout = getNextTimer();
-        if(stopping(next_timeout)){
-                DHT_LOG_INFO(g_logger) << "name=" << getName()
-                                       << " idle stopping exit";
-                break;
+    while(true) {
+        uint64_t next_timeout = 0;
+        if(DHT_UNLIKELY(stopping(next_timeout))) {
+            DHT_LOG_INFO(g_logger) << "name=" << getName()
+                                     << " idle stopping exit";
+            break;
         }
+
         int rt = 0;
         do {
             static const int MAX_TIMEOUT = 3000;
-            if(next_timeout != ~0ull){
+            if(next_timeout != ~0ull) {
                 next_timeout = (int)next_timeout > MAX_TIMEOUT
-                                ? MAX_TIMEOUT : next_timeout;
-            }else {
+                               ? MAX_TIMEOUT : next_timeout;
+            } else {
                 next_timeout = MAX_TIMEOUT;
             }
-            /**
-             * 检查已注册的文件描述符上是否有就绪的事件，并在事件就绪时返回
-             * @param[m_epfd] epoll对象的文件描述符
-             * @param[events] 用于存放事件的数组
-             * @param[next_timeout] events数组的大小，即最大可以处理的事件数
-             * @param[timeout] 等待事件的超时时间
-             */
-
-            rt = epoll_wait(m_epfd, events,64, (int)next_timeout);
-
-            if(rt < 0 && errno == EINTR){
-                //如果epoll_wait因信号中断而返回，继续等待
-            }else {
-                break; //等待事件发生后，跳出循环
+            rt = epoll_wait(m_epfd, events, MAX_EVNETS, (int)next_timeout);
+            if(rt < 0 && errno == EINTR) {
+            } else {
+                break;
             }
         } while(true);
 
-        //检查定时器
-        std::vector<std::function<void()>> cbs;
+        std::vector<std::function<void()> > cbs;
         listExpiredCb(cbs);
         if(!cbs.empty()) {
-            //schedule(cbs.begin(), cbs.end());
-            for(auto& i : cbs){
-                schedule(i);
-            }
+            //SYLAR_LOG_DEBUG(g_logger) << "on timer cbs.size=" << cbs.size();
+            schedule(cbs.begin(), cbs.end());
             cbs.clear();
         }
 
-        //处理所有已发生的事件
-        for(int i = 0; i < rt; ++i){
+        //if(SYLAR_UNLIKELY(rt == MAX_EVNETS)) {
+        //    SYLAR_LOG_INFO(g_logger) << "epoll wait events=" << rt;
+        //}
+
+        for(int i = 0; i < rt; ++i) {
             epoll_event& event = events[i];
             if(event.data.fd == m_tickleFds[0]) {
-                //uint8_t dummy[256];
-                //while(read(m_tickleFds[0], dummy, sizeof(dummy)) > 0);
-                uint8_t dummy;
-                while(read(m_tickleFds[0], &dummy, 1) == 1);
+                uint8_t dummy[256];
+                while(read(m_tickleFds[0], dummy, sizeof(dummy)) > 0);
                 continue;
             }
 
             FdContext* fd_ctx = (FdContext*)event.data.ptr;
             FdContext::MutexType::Lock lock(fd_ctx->mutex);
-
-            // 如果事件中包含错误或挂起（错误或连接关闭等），补充触发读写事件
-            if(event.events & (EPOLLERR | EPOLLHUP)){
-                event.events |= EPOLLIN | EPOLLOUT;
+            if(event.events & (EPOLLERR | EPOLLHUP)) {
+                event.events |= (EPOLLIN | EPOLLOUT) & fd_ctx->events;
             }
-
             int real_events = NONE;
             if(event.events & EPOLLIN) {
                 real_events |= READ;
@@ -406,14 +437,14 @@ void IOManager::idle() {
 
             int rt2 = epoll_ctl(m_epfd, op, fd_ctx->fd, &event);
             if(rt2) {
-                DHT_LOG_ERROR(g_logger) << "epoll_ctl(" << m_epfd << ","
-                                        << op << "," << fd_ctx->fd << ","
-                                        << (EPOLL_EVENTS)event.events << "):"
-                                        << rt2 << "(" << errno <<")("
-                                        << strerror(errno) << ")";
+                DHT_LOG_ERROR(g_logger) << "epoll_ctl(" << m_epfd << ", "
+                                          << (EpollCtlOp)op << ", " << fd_ctx->fd << ", " << (EPOLL_EVENTS)event.events << "):"
+                                          << rt2 << " (" << errno << ") (" << strerror(errno) << ")";
                 continue;
             }
 
+            //SYLAR_LOG_INFO(g_logger) << " fd=" << fd_ctx->fd << " events=" << fd_ctx->events
+            //                         << " real_events=" << real_events;
             if(real_events & READ) {
                 fd_ctx->triggerEvent(READ);
                 --m_pendingEventCount;
