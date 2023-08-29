@@ -186,6 +186,13 @@ void Fiber::MainFunc() {
     // 获取当前正在执行的协程对象，即当前正在执行 MainFunc 的协程
     Fiber::ptr cur = GetThis();
     DHT_ASSERT(cur);
+    // 执行协程的回调函数 m_cb，即协程的实际任务
+    cur->m_cb();
+    // 协程的回调函数执行完成后，将回调函数 m_cb 置为空指针，表示协程的任务已经完成
+    cur->m_cb = nullptr;
+    // 将协程的状态标记为 TERMINATE（TERM），表示协程执行完成
+    cur->m_state = TERM;
+    /**
     try {
         // 执行协程的回调函数 m_cb，即协程的实际任务
         cur->m_cb();
@@ -208,6 +215,7 @@ void Fiber::MainFunc() {
                                   << std::endl
                                   << dht::BacktraceToString();
     }
+     **/
 
     auto raw_ptr = cur.get();
     // 释放当前协程的 shared_ptr 引用计数，并将 cur 指针重置为 nullptr

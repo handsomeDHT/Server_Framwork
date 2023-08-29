@@ -81,5 +81,21 @@ public:
             ,std::ios_base::openmode mode);
 };
 
+template<class T>
+const char* TypeToName() {
+    static const char* s_name = abi::__cxa_demangle(typeid(T).name(), nullptr, nullptr, nullptr);
+    return s_name;
+}
+
+class TypeUtil {
+public:
+    static int8_t ToChar(const std::string& str);
+    static int64_t Atoi(const std::string& str);
+    static double Atof(const std::string& str);
+    static int8_t ToChar(const char* str);
+    static int64_t Atoi(const char* str);
+    static double Atof(const char* str);
+};
+
 }
 #endif //SERVER_FRAMWORK_UTIL_H
