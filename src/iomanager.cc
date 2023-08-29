@@ -297,7 +297,7 @@ bool IOManager::cancelAll(int fd) {
     lock.unlock();
 
     FdContext::MutexType::Lock lock2(fd_ctx->mutex);
-    if(fd_ctx->events){
+    if(!fd_ctx->events){
         return false;
     }
 
