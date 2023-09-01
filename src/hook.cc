@@ -162,7 +162,7 @@ retry:
                 return -1;
             }
             // 回到 retry 标签处，继续进行重试操作
-            DHT_ASSERT(dht::Fiber::GetThis()->getState() == dht::Fiber::EXEC);
+
             goto retry;
         }
     }

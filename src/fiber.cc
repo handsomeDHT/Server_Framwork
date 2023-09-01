@@ -174,7 +174,7 @@ void Fiber::YieldToReady() {
 void Fiber::YieldToHold() {
     Fiber::ptr cur = GetThis();
     DHT_ASSERT(cur->m_state == EXEC);
-    cur->m_state = HOLD;
+    //cur->m_state = HOLD;
     cur->swapOut();
 }
 
