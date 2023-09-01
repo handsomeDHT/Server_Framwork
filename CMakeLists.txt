@@ -48,9 +48,11 @@ set(LIB_SRC
      src/http/http_session.cc
      src/http/servlet.cc
      src/http/http_server.cc
+     src/http/http_connection.cc
         src/util/crypto_util.cc
         src/util/hash_util.cc
         src/util/json_util.cc
+
         )
 
 add_library(src SHARED ${LIB_SRC})
@@ -146,6 +148,11 @@ add_executable(test_http_server tests/test_http_server.cc)
 add_dependencies(test_http_server src)
 force_redefine_file_macro_for_sources(test_http_server) #__FILE__
 target_link_libraries(test_http_server ${LIBS})
+
+add_executable(test_http_connection tests/test_http_connection.cc)
+add_dependencies(test_http_connection src)
+force_redefine_file_macro_for_sources(test_http_connection) #__FILE__
+target_link_libraries(test_http_connection ${LIBS})
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
