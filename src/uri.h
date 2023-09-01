@@ -1,7 +1,6 @@
-//
-// Created by 帅帅的涛 on 2023/9/1.
-//
-
+/**
+ * URI封装类
+ */
 #ifndef SERVER_FRAMWORK_URI_H
 #define SERVER_FRAMWORK_URI_H
 
@@ -18,6 +17,13 @@ namespace dht {
        \_/   \______________/\_________/ \_________/ \__/
         |           |            |            |        |
      scheme     authority       path        query   fragment
+
+ 方案（Scheme）：标识了使用的协议或规范，例如 "http"、"https"、"ftp" 等。
+主机（Host）：标识了资源所在的主机或服务器的域名或IP地址。
+端口（Port）：可选组件，标识了与主机通信的端口号。
+路径（Path）：标识了资源在服务器上的位置，通常表示为一个文件路径或路由。
+查询（Query）：可选组件，包含了向服务器请求资源时的参数。
+片段（Fragment）：可选组件，标识了资源中的特定部分。
 */
 
 /**

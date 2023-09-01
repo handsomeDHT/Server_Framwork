@@ -34,9 +34,10 @@ HttpConnection::~HttpConnection() {
 }
 
 HttpResponse::ptr HttpConnection::recvResponse() {
+    //HttpResponseParser -> HTTP自定义的解析结构体
     HttpResponseParser::ptr parser(new HttpResponseParser);
     uint64_t buff_size = HttpRequestParser::GetHttpRequestBufferSize();
-    //uint64_t buff_size = 100;
+
     std::shared_ptr<char> buffer(
             new char[buff_size + 1], [](char* ptr){
                 delete[] ptr;
@@ -44,49 +45,63 @@ HttpResponse::ptr HttpConnection::recvResponse() {
     char* data = buffer.get();
     int offset = 0;
     do {
+        //从连接中获取数据到缓冲区
         int len = read(data + offset, buff_size - offset);
+        // 如果读取的数据长度小于等于0，表示连接已关闭或出现错误
         if(len <= 0) {
             close();
             return nullptr;
         }
+        // 更新数据长度，将缓冲区的数据长度与偏移相加
         len += offset;
-        data[len] = '\0';
+        data[len] = '\0'; //在数据末尾添加空字符，以便处理字符串
+
+        //使用解析器解析HTTP响应数据
         size_t nparse = parser->execute(data, len, false);
+        // 检查解析器是否发生错误
         if(parser->hasError()) {
             close();
             return nullptr;
         }
+        // 计算剩余未解析的数据长度
         offset = len - nparse;
+        // 如果缓冲区已满，关闭连接并返回空指针
         if(offset == (int)buff_size) {
             close();
             return nullptr;
         }
+        // 如果解析器已完成解析，跳出循环
         if(parser->isFinished()) {
             break;
         }
     } while(true);
+
+    // 获取解析器的客户端解析器对象
     auto& client_parser = parser->getParser();
     std::string body;
     if(client_parser.chunked) {
-        int len = offset;
+        int len = offset; // 初始化数据长度为偏移值
         do {
-            bool begin = true;
+            bool begin = true;// 标记是否是数据块的起始
             do {
+                // 如果不是数据块的起始或者当前缓冲区为空，从连接中读取数据
                 if(!begin || len == 0) {
                     int rt = read(data + len, buff_size - len);
                     if(rt <= 0) {
                         close();
                         return nullptr;
                     }
-                    len += rt;
+                    len += rt;// 更新数据长度
                 }
-                data[len] = '\0';
+                data[len] = '\0'; // 在数据末尾添加空字符，以便后续处理成字符串
+                // 使用解析器解析HTTP响应数据块
                 size_t nparse = parser->execute(data, len, true);
+                // 检查解析器是否发生错误
                 if(parser->hasError()) {
                     close();
                     return nullptr;
                 }
-                len -= nparse;
+                len -= nparse; // 计算剩余未解析的数据长度
                 if(len == (int)buff_size) {
                     close();
                     return nullptr;
@@ -94,44 +109,56 @@ HttpResponse::ptr HttpConnection::recvResponse() {
                 begin = false;
             } while(!parser->isFinished());
             //len -= 2;
-
+            // 输出当前数据块的内容长度
             DHT_LOG_DEBUG(g_logger) << "content_len=" << client_parser.content_len;
+
+            // 如果当前数据块内容可以完全添加到响应体中
             if(client_parser.content_len + 2 <= len) {
+                // 将数据块内容添加到响应体中
                 body.append(data, client_parser.content_len);
+                // 移动缓冲区中剩余的数据，并更新长度
                 memmove(data, data + client_parser.content_len + 2
                         , len - client_parser.content_len - 2);
                 len -= client_parser.content_len + 2;
-            } else {
+            } else {        // 如果当前数据块无法完全添加到响应体中
                 body.append(data, len);
+                // 计算剩余需要读取的数据长度
                 int left = client_parser.content_len - len + 2;
                 while(left > 0) {
+                    // 从连接中读取剩余部分的数据
                     int rt = read(data, left > (int)buff_size ? (int)buff_size : left);
                     if(rt <= 0) {
                         close();
                         return nullptr;
                     }
-                    body.append(data, rt);
-                    left -= rt;
+                    body.append(data, rt); // 将读取的数据添加到响应体
+                    left -= rt; // 更新剩余需要读取的数据长度
                 }
-                body.resize(body.size() - 2);
+                body.resize(body.size() - 2);// 移除结尾的两个字符（\r\n）
                 len = 0;
             }
-        } while(!client_parser.chunks_done);
+        } while(!client_parser.chunks_done); // 继续处理下一个数据块，直到数据块传输完毕
     } else {
+        // 获取HTTP响应的内容长度（如果有）
         int64_t length = parser->getContentLength();
         if(length > 0) {
+            // 调整响应体的大小以容纳内容
             body.resize(length);
 
             int len = 0;
+            // 如果内容长度大于或等于偏移值（缓冲区中的数据），则将缓冲区中的数据复制到响应体中
             if(length >= offset) {
                 memcpy(&body[0], data, offset);
                 len = offset;
             } else {
+                // 如果内容长度小于偏移值，只复制部分数据到响应体中
                 memcpy(&body[0], data, length);
                 len = length;
             }
+            // 计算剩余未复制的内容长度
             length -= offset;
             if(length > 0) {
+                // 如果仍有剩余的内容需要读取，继续从连接中读取
                 if(readFixSize(&body[len], length) <= 0) {
                     close();
                     return nullptr;
@@ -140,18 +167,28 @@ HttpResponse::ptr HttpConnection::recvResponse() {
         }
     }
     if(!body.empty()) {
+        // 获取HTTP响应中的内容编码类型
         auto content_encoding = parser->getData()->getHeader("content-encoding");
         DHT_LOG_DEBUG(g_logger) << "content_encoding: " << content_encoding
                                   << " size=" << body.size();
+        // 如果内容编码类型为gzip
         if(strcasecmp(content_encoding.c_str(), "gzip") == 0) {
+            // 创建一个用于解压缩的ZlibStream对象，参数为false表示解压缩
             auto zs = ZlibStream::CreateGzip(false);
+            // 将响应体内容写入解压缩流
             zs->write(body.c_str(), body.size());
+            // 刷新解压缩流
             zs->flush();
+            // 将解压缩后的结果替换掉原始的响应体内容
             zs->getResult().swap(body);
-        } else if(strcasecmp(content_encoding.c_str(), "deflate") == 0) {
+        } else if(strcasecmp(content_encoding.c_str(), "deflate") == 0) {   // 如果内容编码类型为deflate
+            // 创建一个用于解压缩的ZlibStream对象，参数为false表示解压缩
             auto zs = ZlibStream::CreateDeflate(false);
+            // 将响应体内容写入解压缩流
             zs->write(body.c_str(), body.size());
+            // 刷新解压缩流
             zs->flush();
+            // 将解压缩后的结果替换掉原始的响应体内容
             zs->getResult().swap(body);
         }
         parser->getData()->setBody(body);
@@ -304,6 +341,8 @@ HttpConnectionPool::ptr HttpConnectionPool::Create(const std::string& uri
             , vhost, turi->getPort(), turi->getScheme() == "https"
             , max_size, max_alive_time, max_request);
 }
+
+//HttpConnectionPool___________----------------------------------------------------
 
 HttpConnectionPool::HttpConnectionPool(const std::string& host
         ,const std::string& vhost
