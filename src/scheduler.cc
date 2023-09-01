@@ -12,7 +12,7 @@ namespace dht{
 static dht::Logger::ptr g_logger = DHT_LOG_NAME("system");
 
 static thread_local Scheduler* t_scheduler = nullptr;
-static thread_local Fiber* t_fiber = nullptr; //主协程
+static thread_local Fiber* t_scheduler_fiber = nullptr; //主协程
 
 Scheduler::Scheduler(size_t threads, bool use_caller, const std::string &name)
     :m_name(name){
@@ -31,7 +31,7 @@ Scheduler::Scheduler(size_t threads, bool use_caller, const std::string &name)
         m_rootFiber.reset(new Fiber(std::bind(&Scheduler::run, this) ,0, true));
         dht::Thread::SetName(m_name);
         // 将 t_fiber 设置为根协程，表示当前执行的协程为根协程
-        t_fiber = m_rootFiber.get();
+        t_scheduler_fiber = m_rootFiber.get();
         m_rootThread = dht::GetThreadId();
         m_threadIds.push_back(m_rootThread);
     }else {
@@ -53,7 +53,7 @@ Scheduler *Scheduler::GetThis() {
 }
 
 Fiber *Scheduler::GetMainFiber() {
-    return t_fiber;
+    return t_scheduler_fiber;
 }
 
 void Scheduler::start() {
@@ -132,7 +132,7 @@ void Scheduler::run() {
     setThis();
     // 如果当前线程的线程 ID 不等于主线程的线程 ID，将当前线程重置为调度器的线程
     if(dht::GetThreadId() != m_rootThread){
-        t_fiber = Fiber::GetThis().get();
+        t_scheduler_fiber = Fiber::GetThis().get();
     }
     //当线程没事做的时候，用Idle
     Fiber::ptr idle_fiber(new Fiber(std::bind(&Scheduler::idle, this)));

@@ -5,7 +5,7 @@
 #ifndef SERVER_FRAMWORK_HTTP_SESSION_H
 #define SERVER_FRAMWORK_HTTP_SESSION_H
 
-#include "src/socket_stream.h"
+#include "src/streams/socket_stream.h"
 #include "http.h"
 
 

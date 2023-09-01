@@ -156,6 +156,9 @@ void TimerManager::listExpiredCb(std::vector<std::function<void()>> &cbs) {
         }
     }
     RWMutexType::WriteLock lock(m_mutex);
+    if(m_timers.empty()) {
+        return;
+    }
     //检查服务器的时间是否调后了
     bool rollover = detectClockRollover(now_ms);
     if(!rollover && (*m_timers.begin())->m_next > now_ms){

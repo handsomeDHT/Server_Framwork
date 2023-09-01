@@ -20,6 +20,11 @@ if(OPENSSL_FOUND)
     include_directories(${OPENSSL_INCLUDE_DIR})
 endif()
 
+find_package(Boost REQUIRED)
+if(Boost_FOUND)
+    include_directories(${Boost_INCLUDE_DIRS})
+endif()
+
 set(LIB_SRC
     src/log.cc
     src/util.cc
@@ -40,7 +45,8 @@ set(LIB_SRC
     src/bytearray.cc
     src/tcp_server.cc
     src/stream.cc
-    src/socket_stream.cc
+    src/uri.rl
+    src/streams/socket_stream.cc
     src/http/http.cc
      src/http/http11_parser.rl.cc
      src/http/httpclient_parser.rl.cc
@@ -53,7 +59,14 @@ set(LIB_SRC
         src/util/hash_util.cc
         src/util/json_util.cc
 
+        src/streams/socket_stream.cc
+        src/streams/zlib_stream.cc
+
         )
+
+ragelmaker(src/http/http11_parser.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/http)
+ragelmaker(src/http/httpclient_parser.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/http)
+ragelmaker(src/uri.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 add_library(src SHARED ${LIB_SRC})
 force_redefine_file_macro_for_sources(src) #__FILE__
@@ -153,6 +166,11 @@ add_executable(test_http_connection tests/test_http_connection.cc)
 add_dependencies(test_http_connection src)
 force_redefine_file_macro_for_sources(test_http_connection) #__FILE__
 target_link_libraries(test_http_connection ${LIBS})
+
+add_executable(test_uri tests/test_uri.cc)
+add_dependencies(test_uri src)
+force_redefine_file_macro_for_sources(test_uri) #__FILE__
+target_link_libraries(test_uri ${LIBS})
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)

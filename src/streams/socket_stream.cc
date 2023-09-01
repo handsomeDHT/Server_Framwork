@@ -1,10 +1,7 @@
-//
-// Created by 帅帅的涛 on 2023/8/28.
-//
-
 #include "socket_stream.h"
+#include "src/util.h"
 
-namespace dht{
+namespace dht {
 
 SocketStream::SocketStream(Socket::ptr sock, bool owner)
         :m_socket(sock)

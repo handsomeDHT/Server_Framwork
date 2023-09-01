@@ -8,6 +8,9 @@
 #include "log.h"
 #include "macro.h"
 #include "hook.h"
+#include <netinet/tcp.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <limits.h>
 
 namespace dht {

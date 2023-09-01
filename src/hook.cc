@@ -6,6 +6,7 @@
 #include "fiber.h"
 #include "iomanager.h"
 #include "fd_manager.h"
+#include "macro.h"
 #include "dht.h"
 #include <functional>
 #include <dlfcn.h>
@@ -142,7 +143,7 @@ retry:
         //uint64_t now = 0;
         // 将套接字添加到 IOManager 中，等待事件发生
         int rt = iom->addEvent(fd, (dht::IOManager::Event)(event));
-        if(rt){
+        if(DHT_UNLIKELY(rt)){
                 DHT_LOG_ERROR(g_logger) << hook_fun_name << " addEvent("
                                         << fd << ", " << event << ")";
             if(timer) {
@@ -161,6 +162,7 @@ retry:
                 return -1;
             }
             // 回到 retry 标签处，继续进行重试操作
+            DHT_ASSERT(dht::Fiber::GetThis()->getState() == dht::Fiber::EXEC);
             goto retry;
         }
     }
