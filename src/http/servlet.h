@@ -1,6 +1,6 @@
-//
-// Created by 帅帅的涛 on 2023/8/29.
-//
+/**
+ * Servlet (一种在服务器端处理客户端请求的Java技术)
+ */
 
 #ifndef SERVER_FRAMWORK_SERVLET_H
 #define SERVER_FRAMWORK_SERVLET_H

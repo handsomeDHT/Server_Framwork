@@ -19,8 +19,6 @@ int32_t FunctionServlet::handle(dht::http::HttpRequest::ptr request
     return m_cb(request, response, session);
 }
 
-
-
 ServletDispatch::ServletDispatch()
         :Servlet("ServletDispatch") {
     m_default.reset(new NotFoundServlet("dht/1.0"));
@@ -41,6 +39,13 @@ void ServletDispatch::addServlet(const std::string& uri, Servlet::ptr slt) {
     m_datas[uri] = std::make_shared<HoldServletCreator>(slt);
 }
 
+void ServletDispatch::addServlet(const std::string& uri
+        ,FunctionServlet::callback cb) {
+    RWMutexType::WriteLock lock(m_mutex);
+    m_datas[uri] = std::make_shared<HoldServletCreator>(
+            std::make_shared<FunctionServlet>(cb));
+}
+
 void ServletDispatch::addServletCreator(const std::string& uri, IServletCreator::ptr creator) {
     RWMutexType::WriteLock lock(m_mutex);
     m_datas[uri] = creator;
@@ -56,13 +61,6 @@ void ServletDispatch::addGlobServletCreator(const std::string& uri, IServletCrea
         }
     }
     m_globs.push_back(std::make_pair(uri, creator));
-}
-
-void ServletDispatch::addServlet(const std::string& uri
-        ,FunctionServlet::callback cb) {
-    RWMutexType::WriteLock lock(m_mutex);
-    m_datas[uri] = std::make_shared<HoldServletCreator>(
-            std::make_shared<FunctionServlet>(cb));
 }
 
 void ServletDispatch::addGlobServlet(const std::string& uri

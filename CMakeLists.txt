@@ -5,12 +5,15 @@ include (cmake/utils.cmake)
 
 set(CMAKE_CXX_STANDARD 17)
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+include (cmake/utils.cmake)
+
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic -O3 -fPIC -ggdb -std=c++11 -Wall -Wno-deprecated -Werror -Wno-unused-function -Wno-builtin-macro-redefined -Wno-deprecated-declarations -Wno-builtin-macro-redefined")
 
+
 include_directories(.)
 include_directories(./third_part_apps/include)
-
 link_directories(./third_part_apps/lib64)
 
 option(BUILD_TEST "ON for complile test" OFF)
@@ -58,10 +61,10 @@ set(LIB_SRC
         src/util/crypto_util.cc
         src/util/hash_util.cc
         src/util/json_util.cc
-
         src/streams/socket_stream.cc
         src/streams/zlib_stream.cc
-
+     src/daemon.cc
+     src/env.cc
         )
 
 ragelmaker(src/http/http11_parser.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/http)
@@ -82,95 +85,29 @@ set(LIBS
         ${OPENSSL_LIBRARIES}
 )
 
-add_executable(test tests/test.cc)
-add_dependencies(test src)
-force_redefine_file_macro_for_sources(test) #__FILE__
-target_link_libraries(test ${LIBS})
-
-add_executable(test_config tests/test_config.cc)
-add_dependencies(test_config src)
-force_redefine_file_macro_for_sources(test_config) #__FILE__
-target_link_libraries(test_config ${LIBS})
-
-add_executable(test_thread tests/test_thread.cc)
-add_dependencies(test_thread src)
-force_redefine_file_macro_for_sources(test_thread) #__FILE__
-target_link_libraries(test_thread ${LIBS})
-
-add_executable(test_util tests/test_util.cc)
-add_dependencies(test_util src)
-force_redefine_file_macro_for_sources(test_util) #__FILE__
-target_link_libraries(test_util ${LIBS})
-
-add_executable(test_fiber tests/test_fiber.cc)
-add_dependencies(test_fiber src)
-force_redefine_file_macro_for_sources(test_fiber) #__FILE__
-target_link_libraries(test_fiber ${LIBS})
-
-add_executable(test_scheduler tests/test_scheduler.cc)
-add_dependencies(test_scheduler src)
-force_redefine_file_macro_for_sources(test_scheduler) #__FILE__
-target_link_libraries(test_scheduler ${LIBS})
-
-add_executable(test_iomanager tests/test_iomanager.cc)
-add_dependencies(test_iomanager src)
-force_redefine_file_macro_for_sources(test_iomanager) #__FILE__
-target_link_libraries(test_iomanager ${LIBS})
-
-add_executable(test_hook tests/test_hook.cc)
-add_dependencies(test_hook src)
-force_redefine_file_macro_for_sources(test_hook) #__FILE__
-target_link_libraries(test_hook ${LIBS})
-
-add_executable(test_address tests/test_address.cc)
-add_dependencies(test_address src)
-force_redefine_file_macro_for_sources(test_address) #__FILE__
-target_link_libraries(test_address ${LIBS})
-
-add_executable(test_socket tests/test_socket.cc)
-add_dependencies(test_socket src)
-force_redefine_file_macro_for_sources(test_socket) #__FILE__
-target_link_libraries(test_socket ${LIBS})
-
-add_executable(test_bytearray tests/test_bytearray.cc)
-add_dependencies(test_bytearray src)
-force_redefine_file_macro_for_sources(test_bytearray) #__FILE__
-target_link_libraries(test_bytearray ${LIBS})
-
-add_executable(test_http tests/test_http.cc)
-add_dependencies(test_http src)
-force_redefine_file_macro_for_sources(test_http) #__FILE__
-target_link_libraries(test_http ${LIBS})
-
-add_executable(test_http_parser tests/test_http_parser.cc)
-add_dependencies(test_http_parser src)
-force_redefine_file_macro_for_sources(test_http_parser) #__FILE__
-target_link_libraries(test_http_parser ${LIBS})
-
-add_executable(test_tcp_server tests/test_tcp_server.cc)
-add_dependencies(test_tcp_server src)
-force_redefine_file_macro_for_sources(test_tcp_server) #__FILE__
-target_link_libraries(test_tcp_server ${LIBS})
-
-add_executable(echo_server examples/echo_server.cc)
-add_dependencies(echo_server src)
-force_redefine_file_macro_for_sources(echo_server) #__FILE__
-target_link_libraries(echo_server ${LIBS})
-
-add_executable(test_http_server tests/test_http_server.cc)
-add_dependencies(test_http_server src)
-force_redefine_file_macro_for_sources(test_http_server) #__FILE__
-target_link_libraries(test_http_server ${LIBS})
-
-add_executable(test_http_connection tests/test_http_connection.cc)
-add_dependencies(test_http_connection src)
-force_redefine_file_macro_for_sources(test_http_connection) #__FILE__
-target_link_libraries(test_http_connection ${LIBS})
-
-add_executable(test_uri tests/test_uri.cc)
-add_dependencies(test_uri src)
-force_redefine_file_macro_for_sources(test_uri) #__FILE__
-target_link_libraries(test_uri ${LIBS})
+dht_add_executable(test "tests/test.cc" src "${LIBS}")
+dht_add_executable(test_config "tests/test_config.cc" src "${LIBS}")
+dht_add_executable(test_thread "tests/test_thread.cc" src "${LIBS}")
+dht_add_executable(test_util "tests/test_util.cc" src "${LIBS}")
+dht_add_executable(test_fiber "tests/test_fiber.cc" src "${LIBS}")
+dht_add_executable(test_scheduler "tests/test_scheduler.cc" src "${LIBS}")
+dht_add_executable(test_iomanager "tests/test_iomanager.cc" src "${LIBS}")
+dht_add_executable(test_hook "tests/test_hook.cc" src "${LIBS}")
+dht_add_executable(test_address "tests/test_address.cc" src "${LIBS}")
+dht_add_executable(test_socket "tests/test_socket.cc" src "${LIBS}")
+dht_add_executable(test_bytearray "tests/test_bytearray.cc" src "${LIBS}")
+dht_add_executable(test_http "tests/test_http.cc" src "${LIBS}")
+dht_add_executable(test_http_parser "tests/test_http_parser.cc" src "${LIBS}")
+dht_add_executable(test_tcp_server "tests/test_tcp_server.cc" src "${LIBS}")
+dht_add_executable(echo_server "examples/echo_server.cc" src "${LIBS}")
+dht_add_executable(test_http_server "tests/test_http_server.cc" src "${LIBS}")
+dht_add_executable(test_http_connection "tests/test_http_connection.cc" src "${LIBS}")
+dht_add_executable(test_uri "tests/test_uri.cc" src "${LIBS}")
+dht_add_executable(my_http_server "samples/my_http_server.cc" src "${LIBS}")
+dht_add_executable(echo_server_udp "examples/echo_server_udp.cc" src "${LIBS}")
+dht_add_executable(echo_udp_client "examples/echo_udp_client.cc" src "${LIBS}")
+dht_add_executable(test_daemon "tests/test_daemon.cc" src "${LIBS}")
+dht_add_executable(test_env "tests/test_env.cc" src "${LIBS}")
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
