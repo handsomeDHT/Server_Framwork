@@ -29,6 +29,7 @@ struct A {
 A a;
 
 int main(int argc, char** argv) {
+
     std::cout << "argc=" << argc << std::endl;
     dht::EnvMgr::GetInstance()->addHelp("s", "start with the terminal");
     dht::EnvMgr::GetInstance()->addHelp("d", "run as daemon");
