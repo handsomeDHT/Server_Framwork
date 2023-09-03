@@ -1,6 +1,6 @@
-//
-// Created by 帅帅的涛 on 2023/9/3.
-//
+/**
+ * 处理在程序启动阶段的系统参数解析
+ */
 
 #ifndef SERVER_FRAMWORK_ENV_H
 #define SERVER_FRAMWORK_ENV_H
@@ -32,8 +32,13 @@ public:
 
     bool setEnv(const std::string& key, const std::string& val);
     std::string getEnv(const std::string& key, const std::string& default_value = "");
+
+    std::string getAbsolutePath(const std::string& path) const;
+    std::string getAbsoluteWorkPath(const std::string& path) const;
+    std::string getConfigPath();
 private:
     RWMutexType m_mutex;
+    //环境变量map
     std::map<std::string, std::string> m_args;
     std::vector<std::pair<std::string, std::string> > m_helps;
 

@@ -1,20 +1,25 @@
-//
-// Created by 帅帅的涛 on 2023/9/3.
-//
+
 #include "src/env.h"
 #include <unistd.h>
 #include <iostream>
 #include <fstream>
 
+//通过读取当前的线程，解析其中内容
+//当前线程中运行的是文件test_env，那么解析出来就是这个
 struct A {
     A() {
+        // 打开当前进程的命令行参数文件
         std::ifstream ifs("/proc/" + std::to_string(getpid()) + "/cmdline", std::ios::binary);
+        //std::cout << std::to_string(getpid());
         std::string content;
+        // 预分配4096字节的空间来存储命令行参数
         content.resize(4096);
 
+        // 从文件中读取命令行参数到 content 字符串
         ifs.read(&content[0], content.size());
-        content.resize(ifs.gcount());
+        content.resize(ifs.gcount());// 调整字符串大小以匹配读取的实际字节数
 
+        // 遍历 content 字符串并打印每个字符的索引、字符值和ASCII码值
         for(size_t i = 0; i < content.size(); ++i) {
             std::cout << i << " - " << content[i] << " - " << (int)content[i] << std::endl;
         }
