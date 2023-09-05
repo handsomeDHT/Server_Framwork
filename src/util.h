@@ -14,6 +14,7 @@
 #include <yaml-cpp/yaml.h>
 #include <iostream>
 #include <boost/lexical_cast.hpp>
+#include "src/util/hash_util.h"
 
 namespace dht {
 

@@ -50,14 +50,19 @@ set(LIB_SRC
     src/stream.cc
     src/uri.rl
     src/streams/socket_stream.cc
-    src/http/http.cc
-     src/http/http11_parser.rl.cc
-     src/http/httpclient_parser.rl.cc
-     src/http/http_parser.cc
-     src/http/http_session.cc
-     src/http/servlet.cc
-     src/http/http_server.cc
-     src/http/http_connection.cc
+        src/http/http.cc
+        src/http/http11_parser.rl.cc
+        src/http/httpclient_parser.rl.cc
+        src/http/http_parser.cc
+        src/http/http_session.cc
+        src/http/servlet.cc
+        src/http/http_server.cc
+        src/http/http_connection.cc
+        src/http/ws_connection.cc
+        src/http/ws_server.cc
+        src/http/ws_servlet.cc
+        src/http/ws_session.cc
+
         src/util/crypto_util.cc
         src/util/hash_util.cc
         src/util/json_util.cc
@@ -108,6 +113,8 @@ dht_add_executable(echo_server_udp "examples/echo_server_udp.cc" src "${LIBS}")
 dht_add_executable(echo_udp_client "examples/echo_udp_client.cc" src "${LIBS}")
 dht_add_executable(test_daemon "tests/test_daemon.cc" src "${LIBS}")
 dht_add_executable(test_env "tests/test_env.cc" src "${LIBS}")
+dht_add_executable(test_ws_client "tests/test_ws_client.cc" src "${LIBS}")
+dht_add_executable(test_ws_server "tests/test_ws_server.cc" src "${LIBS}")
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)

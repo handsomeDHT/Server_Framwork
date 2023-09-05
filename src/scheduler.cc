@@ -171,11 +171,12 @@ void Scheduler::run() {
                 }
                 //以上两种状态都不满足，则把该任务赋值给ft,并从任务队列中将他抹除
                 ft = *it;
-                m_fibers.erase(it);
+                m_fibers.erase(it++);
                 ++m_activeThreadCount;
                 is_active = true;
                 break;
             }
+            tickle_me |= it != m_fibers.end();
         }
         //如果存在其他线程的任务，通知一下
         if(tickle_me){

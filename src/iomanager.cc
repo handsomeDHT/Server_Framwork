@@ -336,7 +336,7 @@ IOManager* IOManager::GetThis() {
 }
 
 void IOManager::tickle() {
-    if(hasIdleThreads()){
+    if(!hasIdleThreads()){
         return;
     }
     /**
@@ -367,7 +367,7 @@ void IOManager::idle() {
     DHT_LOG_DEBUG(g_logger) << "idle";
     const uint64_t MAX_EVNETS = 256;
 
-    epoll_event* events = new epoll_event[64]();
+    epoll_event* events = new epoll_event[MAX_EVNETS]();
     //使用智能指针管理events数组的内存释放
     std::shared_ptr<epoll_event> shared_events(events, [](epoll_event* ptr){
         delete[] ptr;
