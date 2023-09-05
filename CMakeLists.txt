@@ -70,6 +70,8 @@ set(LIB_SRC
         src/streams/zlib_stream.cc
      src/daemon.cc
      src/env.cc
+     src/application.cc
+     src/worker.cc
         )
 
 ragelmaker(src/http/http11_parser.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/http)
@@ -115,6 +117,7 @@ dht_add_executable(test_daemon "tests/test_daemon.cc" src "${LIBS}")
 dht_add_executable(test_env "tests/test_env.cc" src "${LIBS}")
 dht_add_executable(test_ws_client "tests/test_ws_client.cc" src "${LIBS}")
 dht_add_executable(test_ws_server "tests/test_ws_server.cc" src "${LIBS}")
+dht_add_executable(test_application "tests/test_application.cc" src "${LIBS}")
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)

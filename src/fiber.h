@@ -8,6 +8,7 @@
 #include <memory>
 #include <ucontext.h>
 #include <functional>
+#include "thread.h"
 
 namespace dht{
 

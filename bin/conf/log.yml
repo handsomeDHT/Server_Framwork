@@ -1,15 +1,16 @@
 logs:
   - name: root
     level: info
-    formatter: '%d%T%m%n'
     appenders:
       - type: FileLogAppender
-        file: root.txt
+        file: /root/home/Server_Framwork/root.txt
       - type: StdoutLogAppender
   - name: system
-    level: debug
-    formatter: '%d%T%m%n'
+    level: info
     appenders:
       - type: FileLogAppender
-        file: system.txt
+        file: /root/home/Server_Framwork/system.txt
       - type: StdoutLogAppender
+        
+        
+

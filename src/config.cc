@@ -3,10 +3,18 @@
 //
 
 #include "config.h"
+#include "singleton.h"
+#include "src/env.h"
+#include "src/util.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 namespace dht{
 
 //ConfigVarBase::ConfigVarBase(const std::string &name, const std::string &description) {}
+
+static dht::Logger::ptr g_logger = DHT_LOG_NAME("system");
 
 ConfigVarBase::ptr Config::LookupBase(const std::string &name) {
     RWMutexType::ReadLock lock(GetMutex());
@@ -39,6 +47,37 @@ static void ListAllMember (const std::string& prefix
         }
     }
 }
+
+static std::map<std::string, uint64_t> s_file2modifytime;
+static dht::Mutex s_mutex;
+
+void Config::LoadFromConfDir(const std::string& path) {
+    std::string absoulte_path = dht::EnvMgr::GetInstance()->getAbsolutePath(path);
+    std::vector<std::string> files;
+    FSUtil::ListAllFile(files, absoulte_path, ".yml");
+
+    for(auto& i : files) {
+        {
+            struct stat st;
+            lstat(i.c_str(), &st);
+            dht::Mutex::Lock lock(s_mutex);
+            if(s_file2modifytime[i] == (uint64_t)st.st_mtime) {
+                continue;
+            }
+            s_file2modifytime[i] = st.st_mtime;
+        }
+        try {
+            YAML::Node root = YAML::LoadFile(i);
+            LoadFromYaml(root);
+            DHT_LOG_INFO(g_logger) << "LoadConfFile file="
+                                     << i << " ok";
+        } catch (...) {
+            DHT_LOG_ERROR(g_logger) << "LoadConfFile file="
+                                      << i << " failed";
+        }
+    }
+}
+
 /**
  * @brief 将加载的yml配置项写入log
  * @param root

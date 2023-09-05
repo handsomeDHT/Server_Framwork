@@ -1,61 +1,38 @@
-//
-// Created by 帅帅的涛 on 2023/4/4.
-//
-
-#include "../src/config.h"
-#include "../src/log.h"
+#include "src/config.h"
+#include "src/log.h"
 #include <yaml-cpp/yaml.h>
+#include "src/env.h"
+#include <iostream>
 
+#if 1
 dht::ConfigVar<int>::ptr g_int_value_config =
-        dht::Config::Lookup(
-                "system.port"
-                ,(int)8080 //m_val
-                ,"system port");
+        dht::Config::Lookup("system.port", (int)8080, "system port");
+
+dht::ConfigVar<float>::ptr g_int_valuex_config =
+        dht::Config::Lookup("system.port", (float)8080, "system port");
 
 dht::ConfigVar<float>::ptr g_float_value_config =
-        dht::Config::Lookup(
-                "system.value"
-                ,(float)10.2f //m_val
-                ,"system value");
+        dht::Config::Lookup("system.value", (float)10.2f, "system value");
 
-dht::ConfigVar<std::vector<int>>::ptr g_int_vec_value_config =
-        dht::Config::Lookup(
-                "system.int_vec"
-                ,std::vector<int>{1,2} //m_val
-                ,"system int vec");
+dht::ConfigVar<std::vector<int> >::ptr g_int_vec_value_config =
+        dht::Config::Lookup("system.int_vec", std::vector<int>{1,2}, "system int vec");
 
-dht::ConfigVar<std::list<int>>::ptr g_int_list_value_config =
-        dht::Config::Lookup(
-                "system.int_list"
-                ,std::list<int>{1,2} //m_val
-                ,"system int list");
+dht::ConfigVar<std::list<int> >::ptr g_int_list_value_config =
+        dht::Config::Lookup("system.int_list", std::list<int>{1,2}, "system int list");
 
-dht::ConfigVar<std::set<int>>::ptr g_int_set_value_config =
-        dht::Config::Lookup(
-                "system.int_set"
-                ,std::set<int>{1,2} //m_val
-                ,"system int set");
+dht::ConfigVar<std::set<int> >::ptr g_int_set_value_config =
+        dht::Config::Lookup("system.int_set", std::set<int>{1,2}, "system int set");
 
-dht::ConfigVar<std::unordered_set<int>>::ptr g_int_uset_value_config =
-        dht::Config::Lookup(
-                "system.int_uset"
-                ,std::unordered_set<int>{1,2} //m_val
-                ,"system int uset");
+dht::ConfigVar<std::unordered_set<int> >::ptr g_int_uset_value_config =
+        dht::Config::Lookup("system.int_uset", std::unordered_set<int>{1,2}, "system int uset");
 
-dht::ConfigVar<std::map<std::string, int>>::ptr g_int_map_value_config =
-        dht::Config::Lookup(
-                "system.int_map"
-                ,std::map<std::string, int>{{"k",2}} //m_val
-                ,"system int map");
+dht::ConfigVar<std::map<std::string, int> >::ptr g_str_int_map_value_config =
+        dht::Config::Lookup("system.str_int_map", std::map<std::string, int>{{"k",2}}, "system str int map");
 
-dht::ConfigVar<std::unordered_map<std::string, int>>::ptr g_int_umap_value_config =
-        dht::Config::Lookup(
-                "system.int_umap"
-                ,std::unordered_map<std::string, int>{{"k",2}} //m_val
-                ,"system int umap");
+dht::ConfigVar<std::unordered_map<std::string, int> >::ptr g_str_int_umap_value_config =
+        dht::Config::Lookup("system.str_int_umap", std::unordered_map<std::string, int>{{"k",2}}, "system str int map");
 
 void print_yaml(const YAML::Node& node, int level) {
-    //根据不同的yaml类型进行解析
     if(node.IsScalar()) {
         DHT_LOG_INFO(DHT_LOG_ROOT()) << std::string(level * 4, ' ')
                                          << node.Scalar() << " - " << node.Type() << " - " << level;
@@ -78,9 +55,19 @@ void print_yaml(const YAML::Node& node, int level) {
     }
 }
 
-void test_config(){
-    DHT_LOG_INFO(DHT_LOG_ROOT()) << "before:" << g_int_value_config->getValue();
-    DHT_LOG_INFO(DHT_LOG_ROOT()) << "before:" << g_float_value_config->toString();
+void test_yaml() {
+    YAML::Node root = YAML::LoadFile("/home/Server_Framwork/bin/conf/log.yml");
+    //print_yaml(root, 0);
+    //DHT_LOG_INFO(DHT_LOG_ROOT()) << root.Scalar();
+
+    DHT_LOG_INFO(DHT_LOG_ROOT()) << root["test"].IsDefined();
+    DHT_LOG_INFO(DHT_LOG_ROOT()) << root["logs"].IsDefined();
+    DHT_LOG_INFO(DHT_LOG_ROOT()) << root;
+}
+
+void test_config() {
+    DHT_LOG_INFO(DHT_LOG_ROOT()) << "before: " << g_int_value_config->getValue();
+    DHT_LOG_INFO(DHT_LOG_ROOT()) << "before: " << g_float_value_config->toString();
 
 #define XX(g_var, name, prefix) \
     { \
@@ -88,9 +75,8 @@ void test_config(){
         for(auto& i : v) { \
             DHT_LOG_INFO(DHT_LOG_ROOT()) << #prefix " " #name ": " << i; \
         } \
-        DHT_LOG_INFO(DHT_LOG_ROOT()) << #prefix "  " #name " yaml: " << g_var->toString(); \
+        DHT_LOG_INFO(DHT_LOG_ROOT()) << #prefix " " #name " yaml: " << g_var->toString(); \
     }
-
 
 #define XX_M(g_var, name, prefix) \
     { \
@@ -102,14 +88,14 @@ void test_config(){
         DHT_LOG_INFO(DHT_LOG_ROOT()) << #prefix " " #name " yaml: " << g_var->toString(); \
     }
 
+
     XX(g_int_vec_value_config, int_vec, before);
     XX(g_int_list_value_config, int_list, before);
     XX(g_int_set_value_config, int_set, before);
     XX(g_int_uset_value_config, int_uset, before);
-    XX_M(g_int_map_value_config, int_map, before);
-    XX_M(g_int_umap_value_config, int_umap, before);
+    XX_M(g_str_int_map_value_config, str_int_map, before);
+    XX_M(g_str_int_umap_value_config, str_int_umap, before);
 
-    //加载配置项，改变日志信息。
     YAML::Node root = YAML::LoadFile("/home/Server_Framwork/bin/conf/test.yml");
     dht::Config::LoadFromYaml(root);
 
@@ -120,33 +106,28 @@ void test_config(){
     XX(g_int_list_value_config, int_list, after);
     XX(g_int_set_value_config, int_set, after);
     XX(g_int_uset_value_config, int_uset, after);
-    XX_M(g_int_map_value_config, str_int_map, after);
-    XX_M(g_int_umap_value_config, str_int_umap, after);
+    XX_M(g_str_int_map_value_config, str_int_map, after);
+    XX_M(g_str_int_umap_value_config, str_int_umap, after);
 }
 
-void test_yaml(){
-    YAML::Node root = YAML::LoadFile("/home/Server_Framwork/bin/conf/log.yml");
-    //加载log.yml后，进行遍历解析
-    print_yaml(root, 0);
+#endif
 
-    //DHT_LOG_INFO(DHT_LOG_ROOT()) << root;
-}
-
-class Person{
+class Person {
 public:
-    Person(){};
+    Person() {};
     std::string m_name;
     int m_age = 0;
     bool m_sex = 0;
 
-    std::string toString() const{
+    std::string toString() const {
         std::stringstream ss;
         ss << "[Person name=" << m_name
-                << " age=" << m_age
-                << " sex=" << m_sex
-                << "]";
+           << " age=" << m_age
+           << " sex=" << m_sex
+           << "]";
         return ss.str();
     }
+
     bool operator==(const Person& oth) const {
         return m_name == oth.m_name
                && m_age == oth.m_age
@@ -155,10 +136,11 @@ public:
 };
 
 namespace dht {
+
 template<>
 class LexicalCast<std::string, Person> {
 public:
-    Person operator()(const std::string &v) {
+    Person operator()(const std::string& v) {
         YAML::Node node = YAML::Load(v);
         Person p;
         p.m_name = node["name"].as<std::string>();
@@ -171,7 +153,7 @@ public:
 template<>
 class LexicalCast<Person, std::string> {
 public:
-    std::string operator()(const Person &p) {
+    std::string operator()(const Person& p) {
         YAML::Node node;
         node["name"] = p.m_name;
         node["age"] = p.m_age;
@@ -185,32 +167,15 @@ public:
 }
 
 dht::ConfigVar<Person>::ptr g_person =
-        dht::Config::Lookup(
-                "class.person"
-                ,Person() //m_val
-                ,"system person");
+        dht::Config::Lookup("class.person", Person(), "system person");
 
 dht::ConfigVar<std::map<std::string, Person> >::ptr g_person_map =
-        dht::Config::Lookup(
-                "class.map"
-                , std::map<std::string, Person>()
-                , "system person");
+        dht::Config::Lookup("class.map", std::map<std::string, Person>(), "system person");
 
 dht::ConfigVar<std::map<std::string, std::vector<Person> > >::ptr g_person_vec_map =
-        dht::Config::Lookup(
-                "class.vec_map"
-                , std::map<std::string
-                , std::vector<Person> >()
-                , "system person");
+        dht::Config::Lookup("class.vec_map", std::map<std::string, std::vector<Person> >(), "system person");
 
 void test_class() {
-
-    g_person->addListener([](const Person& old_value, const Person& new_value){
-        DHT_LOG_INFO(DHT_LOG_ROOT()) << "old_value=" << old_value.toString()
-                                     << " new_value=" << new_value.toString();
-    });
-
-
     DHT_LOG_INFO(DHT_LOG_ROOT()) << "before: " << g_person->getValue().toString() << " - " << g_person->toString();
 
 #define XX_PM(g_var, prefix) \
@@ -222,19 +187,18 @@ void test_class() {
         DHT_LOG_INFO(DHT_LOG_ROOT()) <<  prefix << ": size=" << m.size(); \
     }
 
+    g_person->addListener([](const Person& old_value, const Person& new_value){
+        DHT_LOG_INFO(DHT_LOG_ROOT()) << "old_value=" << old_value.toString()
+                                         << " new_value=" << new_value.toString();
+    });
+
     XX_PM(g_person_map, "class.map before");
-
     DHT_LOG_INFO(DHT_LOG_ROOT()) << "before: " << g_person_vec_map->toString();
-
 
     YAML::Node root = YAML::LoadFile("/home/Server_Framwork/bin/conf/test.yml");
     dht::Config::LoadFromYaml(root);
 
-
-    DHT_LOG_INFO(DHT_LOG_ROOT()) << "after: "
-            << g_person->getValue().toString()
-            << " - " << g_person->toString();
-
+    DHT_LOG_INFO(DHT_LOG_ROOT()) << "after: " << g_person->getValue().toString() << " - " << g_person->toString();
     XX_PM(g_person_map, "class.map after");
     DHT_LOG_INFO(DHT_LOG_ROOT()) << "after: " << g_person_vec_map->toString();
 }
@@ -242,28 +206,34 @@ void test_class() {
 void test_log() {
     static dht::Logger::ptr system_log = DHT_LOG_NAME("system");
     DHT_LOG_INFO(system_log) << "hello system" << std::endl;
-    std::cout << " test1: " << dht::LoggerMgr::GetInstance()->toYamlString() << std::endl;
-
+    std::cout << dht::LoggerMgr::GetInstance()->toYamlString() << std::endl;
     YAML::Node root = YAML::LoadFile("/home/Server_Framwork/bin/conf/log.yml");
     dht::Config::LoadFromYaml(root);
     std::cout << "=============" << std::endl;
-    std::cout << " test2: "  << dht::LoggerMgr::GetInstance()->toYamlString() << std::endl;
-
+    std::cout << dht::LoggerMgr::GetInstance()->toYamlString() << std::endl;
     std::cout << "=============" << std::endl;
     std::cout << root << std::endl;
     DHT_LOG_INFO(system_log) << "hello system" << std::endl;
-    std::cout << "----------" << std::endl;
 
     system_log->setFormatter("%d - %m%n");
     DHT_LOG_INFO(system_log) << "hello system" << std::endl;
 }
 
-int main(int argc, char** argv){
-    //test_config();
-    //test_yaml();
-    //test_class();
-    test_log();
+void test_loadconf() {
+    dht::Config::LoadFromConfDir("conf");
+}
 
+int main(int argc, char** argv) {
+    //test_yaml();
+    //test_config();
+    //test_class();
+    //test_log();
+    dht::EnvMgr::GetInstance()->init(argc, argv);
+    test_loadconf();
+    std::cout << " ==== " << std::endl;
+    sleep(10);
+    test_loadconf();
+    return 0;
     dht::Config::Visit([](dht::ConfigVarBase::ptr var) {
         DHT_LOG_INFO(DHT_LOG_ROOT()) << "name=" << var->getName()
                                          << " description=" << var->getDescription()

@@ -318,7 +318,8 @@ public:
             return ToStr() (m_val);
         }catch (std::exception& e){
             DHT_LOG_ERROR(DHT_LOG_ROOT()) << "ConfigVar::toString exception"
-                << e.what() << " convert:" << typeid(m_val).name() << "to string";
+                << e.what() << " convert:" << typeid(m_val).name() << "to string"
+                << " name=" << m_name;
         }
         return "";
     }
@@ -328,7 +329,8 @@ public:
             setValue(FromStr() (val));
         }catch(std::exception& e){
             DHT_LOG_ERROR(DHT_LOG_ROOT()) << "ConfigVar::toString exception"
-                << e.what() << " convert: string to" << typeid(m_val).name();
+                << e.what() << " convert: string to" << typeid(m_val).name()
+                << " name=" << m_name << " - " << val;;
         }
         return false;
     }
@@ -464,10 +466,19 @@ public:
         return std::dynamic_pointer_cast<ConfigVar<T>>(it -> second);
     }
 
+    /**
+     * @brief 加载path文件夹里面的配置文件
+     */
+    static void LoadFromConfDir(const std::string& path);
+
     static void LoadFromYaml(const YAML::Node& root);
 
     static ConfigVarBase::ptr LookupBase(const std::string& name);
 
+    /**
+     * @brief 遍历配置模块里面所有配置项
+     * @param[in] cb 配置项回调函数
+     */
     static void Visit(std::function<void(ConfigVarBase::ptr)> cb);
 private:
     static ConfigVarMap& GetDatas(){

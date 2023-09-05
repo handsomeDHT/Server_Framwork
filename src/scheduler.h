@@ -81,6 +81,9 @@ public:
             tickle();
         }
     }
+
+    void switchTo(int thread = -1);
+    std::ostream& dump(std::ostream& os);
 protected:
     virtual void tickle(); //通知协程调度器有任务了
     void run(); //核心内容，分配协程和线程之间的调度关系
@@ -181,6 +184,15 @@ protected:
     bool m_autoStop = false;//是否自动停止
     int m_rootThread = 0; //主线程id
 };
+
+class SchedulerSwitcher : public Noncopyable {
+public:
+    SchedulerSwitcher(Scheduler* target = nullptr);
+    ~SchedulerSwitcher();
+private:
+    Scheduler* m_caller;
+};
+
 }
 
 #endif //SERVER_FRAMWORK_SCHEDULER_H

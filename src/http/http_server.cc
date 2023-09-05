@@ -17,6 +17,11 @@ HttpServer::HttpServer(bool keepalive
     m_dispatch.reset(new ServletDispatch);
 }
 
+void HttpServer::setName(const std::string& v) {
+    TcpServer::setName(v);
+    m_dispatch->setDefault(std::make_shared<NotFoundServlet>(v));
+}
+
 void HttpServer::handleClient(Socket::ptr client) {
     DHT_LOG_DEBUG(g_logger) << "handleClient " << *client;
 
