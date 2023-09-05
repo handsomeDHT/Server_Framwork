@@ -93,6 +93,8 @@ void IOManager::FdContext::triggerEvent(Event event) {
 
 IOManager::IOManager(size_t threads, bool use_caller, const std::string &name)
         : Scheduler(threads, use_caller, name){
+
+    DHT_LOG_INFO(g_logger) << "Init IOManager，创建管道并设置epoll_event事件类型";
     /**
      * @brief 创建一个epoll实例
      * size制定了epoll实例能监听的最大文件描述符数量
@@ -137,7 +139,8 @@ IOManager::IOManager(size_t threads, bool use_caller, const std::string &name)
 }
 
 IOManager::~IOManager(){
-    stop();
+    DHT_LOG_INFO(g_logger) << "将任务配置到iom中后，在析构函数阶段，执行stop并进行join等待任务执行完成";
+    stop();//在生命周结束时，执行所有未执行的Thread
     close(m_epfd);
     close(m_tickleFds[0]);
     close(m_tickleFds[1]);

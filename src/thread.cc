@@ -70,6 +70,11 @@ Thread::~Thread() {
 
 //pthread_join 函数将会阻塞当前线程，直到指定的线程（由 thread 参数指定）执行结束。
 //一旦线程结束，pthread_join 将会获取该线程的返回值，并将其存储在 value_ptr(thread_return) 指向的内存位置中。
+/**
+ * int pthread_join(pthread_t thread, void **retval)
+ * @param[thread] 被连接线程的线程号
+ * @param[retval] 指向一个指向被连接线程的返回码的指针的指针
+ */
 void Thread::join() {
     if(m_thread) {
         int rt = pthread_join(m_thread, nullptr);

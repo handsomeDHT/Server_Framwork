@@ -16,6 +16,8 @@ static thread_local Fiber* t_scheduler_fiber = nullptr; //主协程
 
 Scheduler::Scheduler(size_t threads, bool use_caller, const std::string &name)
     :m_name(name){
+
+    DHT_LOG_INFO(g_logger) << "初始化Iomanager时，首先初始化一个写成调度器Scheduler";
     DHT_ASSERT(threads > 0);
 
     if(use_caller){
@@ -57,6 +59,8 @@ Fiber *Scheduler::GetMainFiber() {
 }
 
 void Scheduler::start() {
+    DHT_LOG_INFO(g_logger) << "IOManager->Start()";
+
     MutexType::Lock lock(m_mutex);
     if(!m_stopping){
         return;
@@ -65,6 +69,9 @@ void Scheduler::start() {
     DHT_ASSERT(m_threads.empty());
 
     m_threads.resize(m_threadCount);
+    DHT_LOG_INFO(g_logger) << "配置指定数量:" << m_threadCount <<" 的线程，并bind(Scheduler::run)"
+            << "并将各线程ID push到m_threadIds中去";
+
     for(size_t i = 0; i < m_threadCount; ++i){
         //初始化对应数量的线程
         m_threads[i].reset(new Thread(std::bind(&Scheduler::run, this)
@@ -72,6 +79,7 @@ void Scheduler::start() {
         //各线程对应ID
         m_threadIds.push_back(m_threads[i]->getId());
     }
+    DHT_LOG_INFO(g_logger) << "线程初始化完成";
     lock.unlock();
 }
 

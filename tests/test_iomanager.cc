@@ -51,6 +51,7 @@ void test1(){
     std::cout << "EPOLLIN=" << EPOLLIN
               << " EPOLLOUT=" << EPOLLOUT << std::endl;
     dht::IOManager iom(2, false);
+    std::cout << "IOManager 创建完毕，等待消息" << std::endl;
     iom.schedule(&test_fiber);
 }
 

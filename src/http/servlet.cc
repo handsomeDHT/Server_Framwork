@@ -8,6 +8,12 @@
 namespace dht{
 namespace http{
 
+/**
+ * 函数式Servlet
+ * ----------------------------------------------
+ * ----------------------------------------------
+ * ----------------------------------------------
+ */
 FunctionServlet::FunctionServlet(callback cb)
         :Servlet("FunctionServlet")
         ,m_cb(cb) {
@@ -19,6 +25,12 @@ int32_t FunctionServlet::handle(dht::http::HttpRequest::ptr request
     return m_cb(request, response, session);
 }
 
+/**
+ * Servlet分发器
+ * ----------------------------------------------
+ * ----------------------------------------------
+ * ----------------------------------------------
+ */
 ServletDispatch::ServletDispatch()
         :Servlet("ServletDispatch") {
     m_default.reset(new NotFoundServlet("dht/1.0"));
@@ -143,7 +155,12 @@ void ServletDispatch::listAllGlobServletCreator(std::map<std::string, IServletCr
         infos[i.first] = i.second;
     }
 }
-
+/**
+ * NotFoundServlet
+ * ----------------------------------------------
+ * ----------------------------------------------
+ * ----------------------------------------------
+ */
 NotFoundServlet::NotFoundServlet(const std::string& name)
         :Servlet("NotFoundServlet")
         ,m_name(name) {
@@ -156,9 +173,11 @@ NotFoundServlet::NotFoundServlet(const std::string& name)
 int32_t NotFoundServlet::handle(dht::http::HttpRequest::ptr request
         , dht::http::HttpResponse::ptr response
         , dht::http::HttpSession::ptr session) {
+    // 设置 HTTP 响应状态为 404 Not Found
     response->setStatus(dht::http::HttpStatus::NOT_FOUND);
     response->setHeader("Server", "dht/1.0.0");
     response->setHeader("Content-Type", "text/html");
+    // 设置响应体内容为存储在 m_content 变量中的 HTML 内容
     response->setBody(m_content);
     return 0;
 }

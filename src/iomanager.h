@@ -24,10 +24,10 @@ public:
         WRITE = 0x4
     };
 private:
-    //Socket事件上线文类
+    //Socket事件上下文类
     struct FdContext{
         typedef Mutex MutexType;
-        //事件上线文类
+        //事件上下文类
         struct EventContext{
             Scheduler* scheduler = nullptr;     //待执行的scheduler
             Fiber::ptr fiber;         //事件协程

@@ -17,6 +17,7 @@
 
 namespace dht{
 namespace http{
+
 class Servlet {
 public:
     /// 智能指针类型定义
@@ -137,6 +138,7 @@ public:
      * @brief 构造函数
      */
     ServletDispatch();
+
     virtual int32_t handle(dht::http::HttpRequest::ptr request
             , dht::http::HttpResponse::ptr response
             , dht::http::HttpSession::ptr session) override;

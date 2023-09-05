@@ -54,6 +54,7 @@ public:
         bool need_tickle = false;
         {
             MutexType::Lock lock(m_mutex);
+            //启动一个无锁的携程任务
             need_tickle = scheduleNoLock(fc, thread);
         }
         if(need_tickle){
